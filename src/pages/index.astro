@@ -117,8 +117,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         window.location.href = routes[command];
       } else {
         const response = command === "help"
-          ? "Commands: about, academics, blog, publications, projects, whoami, clear"
-          : command === "about" || command === "whoami"
+          ? "Commands: about, academics, blog, publications, projects, clear"
+          : command === "about"
             ? "Eluru Sai Venkat — M.Tech AI, RepLab, IISc"
             : `Unknown command: ${command}. Type help.`;
         const line = document.createElement("p");
