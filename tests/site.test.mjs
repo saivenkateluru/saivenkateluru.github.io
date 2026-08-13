@@ -69,11 +69,13 @@ test("academics is reserved for courses, teaching, and achievements", async () =
 test("homepage terminal accepts commands", async () => {
   const html = await readBuilt("index.html");
 
-  assert.match(html, /id="terminal-command"[^>]*autofocus/);
+  assert.doesNotMatch(html, /id="terminal-command"[^>]*autofocus/);
   assert.match(html, /<button type="submit">run<\/button>/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /Unknown command/);
   assert.doesNotMatch(html, /about:\s*"\/"/);
+  assert.match(html, /keydown/);
+  assert.match(html, /requestSubmit/);
 });
 
 test("inner pages provide back navigation", async () => {
