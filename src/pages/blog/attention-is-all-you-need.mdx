@@ -8,9 +8,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <header className="article-header">
     <p className="eyebrow">Deep Learning · Structured draft</p>
     <h1>The Road to Attention Is All You Need</h1>
-    <p className="lede">
-      The Transformer did not begin by inventing attention. It began by asking whether attention still needed recurrence around it.
-    </p>
+    <p className="lede">The Transformer did not begin by inventing attention. It began by asking whether attention still needed recurrence around it.</p>
     <div className="article-meta">
       <span className="meta">Eluru Sai Venkat</span>
       <span className="meta">August 2026</span>
@@ -22,9 +20,21 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <a className="back-link" href="/blog/" aria-label="Back to blog">←</a>
   </header>
 
+  <nav className="article-toc" aria-label="Article contents">
+    <strong>In this article</strong>
+    <ol>
+      <li><a href="#1-sequences-require-memory">RNNs</a></li>
+      <li><a href="#2-lstms-and-grus-improve-the-memory-mechanism">LSTMs and GRUs</a></li>
+      <li><a href="#3-encoder-decoder-models-expose-a-second-bottleneck">The bottleneck</a></li>
+      <li><a href="#4-attention-begins-as-retrieval-over-rnn-states">RNN attention</a></li>
+      <li><a href="#5-from-alignment-to-query-key-and-value">Self-attention</a></li>
+      <li><a href="#6-the-transformer-asks-whether-recurrence-is-still-necessary">The Transformer</a></li>
+    </ol>
+  </nav>
+
 ## 1. Sequences require memory
 
-Let a sequence be $x_{1:T}=(x_1,ldots,x_T)$, where $x_t\in\mathbb{R}^{d_x}$. A feed-forward network treats inputs independently, but language does not: the interpretation of $x_t$ depends on what came before it. A recurrent neural network introduces a state $h_t\in\mathbb{R}^{d_h}$:
+Let a sequence be $x_{1:T}=(x_1,\ldots,x_T)$, where $x_t\in\mathbb{R}^{d_x}$. A feed-forward network treats inputs independently, but language does not: the interpretation of $x_t$ depends on what came before it. A recurrent neural network introduces a state $h_t\in\mathbb{R}^{d_h}$:
 
 $$
 h_t=\phi(W_xx_t+W_hh_{t-1}+b), \qquad y_t=g(W_oh_t).
@@ -56,6 +66,14 @@ $$
 If the Jacobian factors usually have norm below one, the product shrinks exponentially: the gradient vanishes. If they have norm above one, it can explode. Long-range credit assignment is therefore difficult even before we ask whether one fixed-size vector can preserve a long sentence.
 
 <div className="takeaway">The RNN's strength and weakness are the same: every token is forced through one recurrent state.</div>
+
+<figure className="concept-figure">
+  <div className="path-comparison">
+    <div className="path-row"><strong>RNN</strong><span>$x_1$</span><i>→</i><span>$h_1$</span><i>→</i><span>$h_2$</span><i>→</i><span>$h_T$</span></div>
+    <div className="path-row"><strong>Self-attention</strong><span>$x_1$</span><i>⟶</i><span>$x_T$</span></div>
+  </div>
+  <figcaption><strong>Path length.</strong> In an RNN, information crosses up to $O(T)$ recurrent transitions. In one self-attention layer, any token can interact directly with any other token.</figcaption>
+</figure>
 
 ## 2. LSTMs and GRUs improve the memory mechanism
 
@@ -111,7 +129,7 @@ No. When producing $y_s$, let it retrieve the encoder states most relevant to th
 
 ## 4. Attention begins as retrieval over RNN states
 
-Let encoder states be $h_1,ldots,h_T$ and decoder state be $s_{s-1}$. Define an alignment score
+Let encoder states be $h_1,\ldots,h_T$ and decoder state be $s_{s-1}$. Define an alignment score
 
 $$
 e_{s,t}=a(s_{s-1},h_t),
@@ -171,6 +189,36 @@ Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V,
 $$
 
 the operation is **self-attention**. Every token can directly aggregate information from every other token in one layer.
+
+### Worked example: one query, two memories
+
+Take $d_k=2$, $q=[1,0]$, keys $k_1=[1,0]$, $k_2=[0,1]$, and values $v_1=[2,0]$, $v_2=[0,2]$. The scaled scores are
+
+$$
+\frac{[q^\top k_1,\ q^\top k_2]}{\sqrt{2}}
+= [0.707,0].
+$$
+
+Softmax turns them into attention weights $[0.670,0.330]$. Therefore,
+
+$$
+0.670v_1+0.330v_2=[1.34,0.66].
+$$
+
+The output is not a selected value; it is a weighted retrieval. Because $q$ matches $k_1$ more strongly, the result lies closer to $v_1$.
+
+<figure className="concept-figure">
+  <table className="attention-heatmap" aria-label="Example token-to-token attention weights">
+    <thead><tr><th>query ↓ / key →</th><th>The</th><th>model</th><th>reads</th><th>context</th></tr></thead>
+    <tbody>
+      <tr><th>The</th><td className="heat-4">.55</td><td className="heat-2">.20</td><td className="heat-1">.10</td><td className="heat-1">.15</td></tr>
+      <tr><th>model</th><td className="heat-1">.10</td><td className="heat-4">.50</td><td className="heat-2">.25</td><td className="heat-1">.15</td></tr>
+      <tr><th>reads</th><td className="heat-1">.08</td><td className="heat-3">.32</td><td className="heat-3">.40</td><td className="heat-2">.20</td></tr>
+      <tr><th>context</th><td className="heat-1">.05</td><td className="heat-2">.20</td><td className="heat-2">.25</td><td className="heat-4">.50</td></tr>
+    </tbody>
+  </table>
+  <figcaption><strong>Attention as a matrix.</strong> Each row is a query distribution over keys and sums to one. Darker cells receive more weight.</figcaption>
+</figure>
 
 ## 6. The Transformer asks whether recurrence is still necessary
 

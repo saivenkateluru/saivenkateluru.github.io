@@ -15,6 +15,8 @@ const {
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
+const pageTitle = title === "Eluru Sai Venkat" ? title : `${title} · Eluru Sai Venkat`;
+const canonicalURL = new URL(pathname, Astro.site);
 const nav = [
   ["Academics", "/academics/"],
   ["Blog", "/blog/"],
@@ -48,7 +50,17 @@ const socialLinks = [
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    <title>{title === "Eluru Sai Venkat" ? title : `${title} · Eluru Sai Venkat`}</title>
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={article ? "article" : "website"} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="Eluru Sai Venkat's blog" href="/rss.xml" />
+    <title>{pageTitle}</title>
     <script is:inline>
       const savedTheme = localStorage.getItem("theme");
       const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";

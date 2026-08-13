@@ -66,7 +66,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             spellcheck="false"
             placeholder="type help and press Enter"
           />
-          <button type="submit">run</button>
+          <button type="submit" aria-label="Run command" title="Run command">↵</button>
         </form>
       </div>
     </div>
@@ -95,21 +95,46 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const output = document.querySelector<HTMLDivElement>("#terminal-output");
     const routes: Record<string, string> = {
       academics: "/academics/",
+      "open academics": "/academics/",
       blog: "/blog/",
+      "open blog": "/blog/",
       publications: "/publications/",
+      "open publications": "/publications/",
       projects: "/projects/",
+      "open projects": "/projects/",
     };
+    const responses: Record<string, string> = {
+      about: "Eluru Sai Venkat — M.Tech AI, RepLab, IISc",
+      whoami: "Eluru Sai Venkat — M.Tech AI, RepLab, IISc",
+      "cat current.txt": "Second-year M.Tech in Artificial Intelligence student at RepLab, IISc Bengaluru · Aug 2025–Present · advised by Dr. Prathosh A.P.",
+      "cat previous.txt": "Intern, LatentForce AI · May–Jul 2026; Samsung R&D Institute, Delhi · Jul 2023–Nov 2024; B.Tech EE, IIT Madras · 2023.",
+      "ls interests": "Self-Improving Agents  Continual Learning  Inference Optimization",
+      "ls research_interests/": "Self-Improving Agents  Continual Learning  Inference Optimization",
+    };
+    const commandHistory: string[] = [];
+    let historyIndex = 0;
 
     input?.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter") return;
-      event.preventDefault();
-      form?.requestSubmit();
+      if (event.key === "Enter") {
+        event.preventDefault();
+        form?.requestSubmit();
+      } else if (event.key === "ArrowUp" && commandHistory.length) {
+        event.preventDefault();
+        historyIndex = Math.max(0, historyIndex - 1);
+        input.value = commandHistory[historyIndex];
+      } else if (event.key === "ArrowDown" && commandHistory.length) {
+        event.preventDefault();
+        historyIndex = Math.min(commandHistory.length, historyIndex + 1);
+        input.value = commandHistory[historyIndex] ?? "";
+      }
     });
 
     form?.addEventListener("submit", (event) => {
       event.preventDefault();
       const command = input?.value.trim().toLowerCase() ?? "";
       if (!command || !output || !input) return;
+      commandHistory.push(command);
+      historyIndex = commandHistory.length;
 
       if (command === "clear") {
         output.replaceChildren();
@@ -117,10 +142,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         window.location.href = routes[command];
       } else {
         const response = command === "help"
-          ? "Commands: about, academics, blog, publications, projects, whoami, clear"
-          : command === "about" || command === "whoami"
-            ? "Eluru Sai Venkat — M.Tech AI, RepLab, IISc"
-            : `Unknown command: ${command}. Type help.`;
+          ? "Commands: about, whoami, cat current.txt, cat previous.txt, ls research_interests/, open blog, open academics, open publications, open projects, clear"
+          : responses[command] ?? `Unknown command: ${command}. Type help.`;
         const line = document.createElement("p");
         line.textContent = `$ ${command}\n${response}`;
         output.append(line);

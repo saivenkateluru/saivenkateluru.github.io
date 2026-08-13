@@ -70,11 +70,15 @@ test("homepage terminal accepts commands", async () => {
   const html = await readBuilt("index.html");
 
   assert.doesNotMatch(html, /id="terminal-command"[^>]*autofocus/);
-  assert.match(html, /<button type="submit">run<\/button>/);
+  assert.match(html, /aria-label="Run command"[^>]*>↵<\/button>/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /Unknown command/);
   assert.doesNotMatch(html, /about:\s*"\/"/);
-  assert.match(html, /keydown/);
+  assert.match(html, /cat current\.txt/);
+  assert.match(html, /cat previous\.txt/);
+  assert.match(html, /ls research_interests\//);
+  assert.match(html, /open blog/);
+  assert.match(html, /ArrowUp/);
   assert.match(html, /requestSubmit/);
 });
 
@@ -108,4 +112,22 @@ test("attention draft renders mathematics and named references", async () => {
   assert.match(html, /katex/);
   assert.match(html, /Vaswani et al\./);
   assert.match(html, /Attention Is All You Need/);
+  assert.doesNotMatch(html, /,ldots/);
+  assert.match(html, /aria-label="Article contents"/);
+  assert.match(html, /class="path-comparison"/);
+  assert.match(html, /Worked example/);
+  assert.match(html, /class="attention-heatmap"/);
+});
+
+test("published pages include discovery metadata", async () => {
+  const html = await readBuilt("blog/attention-is-all-you-need/index.html");
+  const rss = await readBuilt("rss.xml");
+
+  assert.match(html, /rel="canonical" href="https:\/\/saivenkateluru\.github\.io\/blog\/attention-is-all-you-need\/"/);
+  assert.match(html, /rel="icon" href="\/favicon\.svg"/);
+  assert.match(html, /rel="alternate" type="application\/rss\+xml"/);
+  assert.match(html, /property="og:title"/);
+  assert.match(html, /name="twitter:card" content="summary"/);
+  assert.match(rss, /The Road to Attention Is All You Need/);
+  await readBuilt("favicon.svg");
 });
