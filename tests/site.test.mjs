@@ -21,7 +21,9 @@ test("homepage contains approved identity and timeline", async () => {
   const html = await readBuilt("index.html");
 
   assert.match(html, /Eluru Sai Venkat/i);
+  assert.match(html, /eluru@iisc — profile/i);
   assert.match(html, /M\.Tech in Artificial Intelligence/i);
+  assert.match(html, /student at the\s+<strong>Representation Learning Lab/i);
   assert.match(html, /Representation Learning Lab/i);
   assert.match(html, /LatentForce AI/i);
   assert.match(html, /Samsung R&amp;D Institute/i);
@@ -67,10 +69,35 @@ test("academics is reserved for courses, teaching, and achievements", async () =
 test("homepage terminal accepts commands", async () => {
   const html = await readBuilt("index.html");
 
-  assert.match(html, /id="terminal-command"/);
+  assert.match(html, /id="terminal-command"[^>]*autofocus/);
   assert.match(html, /<button type="submit">run<\/button>/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /Unknown command/);
+  assert.doesNotMatch(html, /about:\s*"\/"/);
+});
+
+test("inner pages provide back navigation", async () => {
+  const pages = await Promise.all(routes.slice(1).map(readBuilt));
+
+  assert.equal(pages.every((html) => /class="back-link"/.test(html)), true);
+});
+
+test("placeholder prose is absent", async () => {
+  const pages = await Promise.all(["index.html", "academics/index.html", "projects/index.html", "publications/index.html"].map(readBuilt));
+  const html = pages.join("\n");
+
+  assert.doesNotMatch(html, /Learning in public/i);
+  assert.doesNotMatch(html, /intentionally honest/i);
+  assert.doesNotMatch(html, /will be (?:added|documented)/i);
+  assert.doesNotMatch(html, /Project write-ups are being prepared/i);
+});
+
+test("theme control is icon-only below social links", async () => {
+  const html = await readBuilt("index.html");
+
+  assert.match(html, /class="social-links"/);
+  assert.match(html, /id="theme-toggle"[^>]*><svg/);
+  assert.doesNotMatch(html, />go (?:light|dark)<\/button>/);
 });
 
 test("attention draft renders mathematics and named references", async () => {

@@ -6,7 +6,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <section class="terminal-card" aria-labelledby="identity-heading">
     <div class="terminal-bar" aria-hidden="true">
       <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
-      <span class="terminal-title">sai@replab — profile</span>
+      <span class="terminal-title">eluru@iisc — profile</span>
     </div>
     <div class="terminal-body">
       <h1 id="identity-heading" class="mobile-name">Eluru<br />Sai Venkat</h1>
@@ -29,8 +29,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <div class="terminal-section">
         <span class="terminal-label">$ cat current.txt</span>
         <p>
-          Second-year <strong>M.Tech in Artificial Intelligence</strong> student at the
-          <strong>Representation Learning Lab (RepLab), IISc Bengaluru</strong> · Aug 2025–Present.<br />
+          Second-year <strong>M.Tech in Artificial Intelligence</strong> student at the{" "}<strong
+            >Representation Learning Lab (RepLab), IISc Bengaluru</strong
+          > · Aug 2025–Present.<br />
           Advised by <a href="https://prathosh.in/">Dr. Prathosh A.P.</a>
         </p>
       </div>
@@ -63,6 +64,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             type="text"
             autocomplete="off"
             spellcheck="false"
+            autofocus
             placeholder="type help and press Enter"
           />
           <button type="submit">run</button>
@@ -86,17 +88,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </ul>
     </section>
 
-    <section>
-      <div class="section-heading"><h2>Now</h2></div>
-      <div class="content-card">
-        <h3>Learning in public</h3>
-        <p>Mathematical notes on generative models, agents, and efficient inference.</p>
-      </div>
-      <div class="content-card">
-        <h3>Building</h3>
-        <p>This site and a reusable workflow for rigorous ML writing.</p>
-      </div>
-    </section>
   </div>
 
   <script>
@@ -104,7 +95,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const input = document.querySelector<HTMLInputElement>("#terminal-command");
     const output = document.querySelector<HTMLDivElement>("#terminal-output");
     const routes: Record<string, string> = {
-      about: "/",
       academics: "/academics/",
       blog: "/blog/",
       publications: "/publications/",
@@ -123,7 +113,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       } else {
         const response = command === "help"
           ? "Commands: about, academics, blog, publications, projects, whoami, clear"
-          : command === "whoami"
+          : command === "about" || command === "whoami"
             ? "Eluru Sai Venkat — M.Tech AI, RepLab, IISc"
             : `Unknown command: ${command}. Type help.`;
         const line = document.createElement("p");
@@ -132,6 +122,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       }
 
       input.value = "";
+      input.focus();
     });
   </script>
 </BaseLayout>

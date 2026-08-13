@@ -84,7 +84,7 @@ button:focus-visible {
 }
 
 nav,
-.header-actions {
+.social-links {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -115,18 +115,44 @@ nav a[aria-current="page"] {
 }
 
 .header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 0.65rem;
   font-family: var(--mono);
 }
 
+.social-links {
+  gap: 0.65rem;
+}
+
 #theme-toggle {
-  padding: 0.38rem 0.65rem;
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0.3rem;
+  place-items: center;
   border: 1px solid var(--border);
-  border-radius: 0.35rem;
+  border-radius: 50%;
   background: var(--surface);
   color: var(--text);
-  font: 0.78rem var(--mono);
   cursor: pointer;
+}
+
+.theme-icon {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+:root[data-theme="dark"] .theme-icon-moon,
+:root[data-theme="light"] .theme-icon-sun {
+  display: none;
 }
 
 .page-shell {
@@ -318,9 +344,6 @@ h3 {
 }
 
 .home-grid {
-  display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
-  gap: 3rem;
   margin-top: 5rem;
 }
 
@@ -357,6 +380,18 @@ h3 {
 
 .page-header {
   margin-bottom: 4rem;
+}
+
+.back-link {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 1.5rem 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font: 1.3rem var(--mono);
+  text-decoration: none;
 }
 
 .timeline {
@@ -529,9 +564,6 @@ footer {
     overflow-x: auto;
   }
 
-  .home-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 560px) {
