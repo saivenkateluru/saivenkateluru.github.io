@@ -239,6 +239,7 @@ h3 {
 .terminal-body {
   padding: clamp(1.25rem, 4vw, 2.25rem);
   font-family: var(--mono);
+  font-size: clamp(0.875rem, calc(0.4rem + 1.5vw), 1rem);
 }
 
 .ascii-name {
@@ -666,7 +667,6 @@ footer {
 
   .terminal-body {
     padding: 1rem;
-    font-size: 0.875rem;
     line-height: 1.55;
   }
 
