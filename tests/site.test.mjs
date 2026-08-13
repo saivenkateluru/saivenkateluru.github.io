@@ -94,7 +94,7 @@ test("placeholder prose is absent", async () => {
   assert.doesNotMatch(html, /Project write-ups are being prepared/i);
 });
 
-test("theme control is icon-only below social links", async () => {
+test("theme control is icon-only alongside social links", async () => {
   const html = await readBuilt("index.html");
 
   assert.match(html, /class="social-links"/);
