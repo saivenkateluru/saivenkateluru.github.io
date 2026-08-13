@@ -113,6 +113,9 @@ test("attention draft renders mathematics and named references", async () => {
   assert.match(html, /Attention Is All You Need/);
   assert.doesNotMatch(html, /,ldots/);
   assert.match(html, /aria-label="Article contents"/);
+  assert.match(html, /class="rnn-unroll"/);
+  assert.match(html, /class="lstm-diagram"/);
+  assert.match(html, /class="gru-diagram"/);
   assert.match(html, /class="path-comparison"/);
   assert.match(html, /Worked example/);
   assert.match(html, /class="attention-heatmap"/);

@@ -564,6 +564,219 @@ h3 {
   color: #111111;
 }
 
+.network-figure {
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.rnn-unroll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding: 1rem 0.25rem 1.5rem;
+}
+
+.rnn-step {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: center;
+  gap: 0.35rem;
+}
+
+.diagram-input,
+.diagram-output,
+.state-token {
+  min-width: 3.25rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #777777;
+  border-radius: 999px;
+  background: #ffffff;
+  text-align: center;
+  font: 700 0.82rem var(--mono);
+}
+
+.recurrent-cell {
+  display: grid;
+  min-width: 6rem;
+  min-height: 5rem;
+  place-items: center;
+  border: 2px solid #111111;
+  border-radius: 0.65rem;
+  background: #ededeb;
+  font: 700 0.9rem var(--mono);
+}
+
+.recurrent-cell small,
+.operator-node small,
+.mix-branch small {
+  display: block;
+  color: #666666;
+  font: 0.62rem var(--mono);
+}
+
+.vertical-arrow,
+.state-arrow,
+.rail-arrow {
+  color: #111111;
+  font: 1.35rem var(--mono);
+}
+
+.state-arrow.dashed {
+  letter-spacing: 0.15em;
+}
+
+.diagram-key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 1rem;
+  color: #555555;
+  font: 0.72rem var(--mono);
+}
+
+.diagram-key span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.key-box {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid #111111;
+  background: #ededeb;
+}
+
+.lstm-diagram,
+.gru-diagram {
+  display: grid;
+  gap: 1.25rem;
+  padding: 0.5rem 0 1.25rem;
+}
+
+.state-rail,
+.state-mix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding: 0.6rem 0;
+}
+
+.state-rail {
+  border-top: 2px solid #111111;
+  border-bottom: 2px solid #111111;
+  background: #f7f7f5;
+}
+
+.operator-node {
+  display: grid;
+  min-width: 4.6rem;
+  place-items: center;
+  padding: 0.55rem;
+  border: 2px solid #111111;
+  border-radius: 0.45rem;
+  background: #ffffff;
+  font: 700 0.82rem var(--mono);
+}
+
+.gate-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.gate-grid.two-gates {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gate-card {
+  position: relative;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #999999;
+  border-radius: 0.55rem;
+  background: #f7f7f5;
+}
+
+.gate-card::before {
+  position: absolute;
+  top: -1.3rem;
+  left: 50%;
+  height: 1.3rem;
+  border-left: 1px dashed #777777;
+  content: "";
+}
+
+.gate-card strong,
+.gate-card small,
+.gate-card code {
+  display: block;
+}
+
+.gate-symbol {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.7rem;
+  place-items: center;
+  border: 2px solid #111111;
+  border-radius: 50%;
+  background: #ffffff;
+  font-weight: 700;
+}
+
+.gate-card small {
+  min-height: 2.5rem;
+  margin: 0.3rem 0 0.7rem;
+  color: #555555;
+}
+
+.gate-card code {
+  overflow-x: auto;
+  padding-top: 0.7rem;
+  border-top: 1px solid #cccccc;
+  color: #111111;
+  font: 0.7rem var(--mono);
+  white-space: nowrap;
+}
+
+.diagram-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px dashed #777777;
+  border-radius: 0.45rem;
+  font: 700 0.8rem var(--mono);
+}
+
+.diagram-source small {
+  width: 100%;
+  color: #555555;
+  text-align: center;
+  font-weight: 400;
+}
+
+.mix-branch {
+  min-width: 10rem;
+  padding: 0.75rem;
+  border: 1px solid #777777;
+  border-radius: 0.45rem;
+  background: #f7f7f5;
+  text-align: center;
+  font: 700 0.75rem var(--mono);
+}
+
+.mix-plus {
+  font: 1.4rem var(--mono);
+}
+
 .figure-flow {
   display: flex;
   align-items: center;
@@ -728,6 +941,33 @@ footer {
 
   .article-toc ol {
     grid-template-columns: 1fr;
+  }
+
+  .rnn-unroll {
+    gap: 0.35rem;
+  }
+
+  .rnn-step:nth-of-type(3),
+  .rnn-step:nth-of-type(2) + .state-arrow {
+    display: none;
+  }
+
+  .recurrent-cell {
+    min-width: 5rem;
+  }
+
+  .gate-grid,
+  .gate-grid.two-gates {
+    grid-template-columns: 1fr;
+  }
+
+  .gate-card::before {
+    display: none;
+  }
+
+  .state-rail,
+  .state-mix {
+    justify-content: flex-start;
   }
 
   footer {

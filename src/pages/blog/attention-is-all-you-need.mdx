@@ -42,14 +42,34 @@ $$
 
 The state is a learned summary of the prefix $x_{1:t}$. Parameters are shared across time, so the same transition rule can process sequences of different lengths.
 
-<figure className="concept-figure">
-  <div className="figure-flow">
-    <div className="figure-node">$x_1\to h_1$</div><span className="figure-arrow">→</span>
-    <div className="figure-node">$x_2\to h_2$</div><span className="figure-arrow">→</span>
-    <div className="figure-node">$x_3\to h_3$</div><span className="figure-arrow">→</span>
-    <div className="figure-node">$x_T\to h_T$</div>
+<figure className="concept-figure network-figure">
+  <div className="rnn-unroll" role="img" aria-label="An RNN unrolled over four time steps">
+    <div className="rnn-step">
+      <span className="diagram-output">$y_1$</span><span className="vertical-arrow">↑</span>
+      <span className="recurrent-cell"><small>shared cell</small>$h_1$</span><span className="vertical-arrow">↑</span>
+      <span className="diagram-input">$x_1$</span>
+    </div>
+    <span className="state-arrow">→</span>
+    <div className="rnn-step">
+      <span className="diagram-output">$y_2$</span><span className="vertical-arrow">↑</span>
+      <span className="recurrent-cell"><small>shared cell</small>$h_2$</span><span className="vertical-arrow">↑</span>
+      <span className="diagram-input">$x_2$</span>
+    </div>
+    <span className="state-arrow">→</span>
+    <div className="rnn-step">
+      <span className="diagram-output">$y_3$</span><span className="vertical-arrow">↑</span>
+      <span className="recurrent-cell"><small>shared cell</small>$h_3$</span><span className="vertical-arrow">↑</span>
+      <span className="diagram-input">$x_3$</span>
+    </div>
+    <span className="state-arrow dashed">⇢</span>
+    <div className="rnn-step">
+      <span className="diagram-output">$y_T$</span><span className="vertical-arrow">↑</span>
+      <span className="recurrent-cell"><small>shared cell</small>$h_T$</span><span className="vertical-arrow">↑</span>
+      <span className="diagram-input">$x_T$</span>
+    </div>
   </div>
-  <figcaption><strong>Figure 1.</strong> An unrolled RNN. Every state receives the current token and the previous state, creating a sequential dependency chain.</figcaption>
+  <div className="diagram-key"><span><i className="key-box"></i> learned recurrent update</span><span>horizontal arrows carry state through time</span></div>
+  <figcaption><strong>Figure 1.</strong> An RNN unrolled through time. Each copy uses the same parameters; only the state and input change.</figcaption>
 </figure>
 
 ### The ideal goal
@@ -67,12 +87,12 @@ If the Jacobian factors usually have norm below one, the product shrinks exponen
 
 <div className="takeaway">The RNN's strength and weakness are the same: every token is forced through one recurrent state.</div>
 
-<figure className="concept-figure">
+<figure className="concept-figure network-figure">
   <div className="path-comparison">
     <div className="path-row"><strong>RNN</strong><span>$x_1$</span><i>→</i><span>$h_1$</span><i>→</i><span>$h_2$</span><i>→</i><span>$h_T$</span></div>
     <div className="path-row"><strong>Self-attention</strong><span>$x_1$</span><i>⟶</i><span>$x_T$</span></div>
   </div>
-  <figcaption><strong>Path length.</strong> In an RNN, information crosses up to $O(T)$ recurrent transitions. In one self-attention layer, any token can interact directly with any other token.</figcaption>
+  <figcaption><strong>Figure 2. Path length.</strong> In an RNN, information crosses up to $O(T)$ recurrent transitions. In one self-attention layer, any token can interact directly with any other token.</figcaption>
 </figure>
 
 ## 2. LSTMs and GRUs improve the memory mechanism
@@ -92,6 +112,39 @@ $$
 
 The forget gate $f_t$ decides what survives, the input gate $i_t$ decides what is written, and the output gate $o_t$ decides what is exposed. Most importantly,
 
+<figure className="concept-figure network-figure">
+  <div className="lstm-diagram" role="img" aria-label="LSTM cell showing the cell-state highway and forget, input, and output gates">
+    <div className="state-rail">
+      <span className="state-token">$c_{t-1}$</span><span className="rail-arrow">→</span>
+      <span className="operator-node">$\odot f_t$<small>retain</small></span><span className="rail-arrow">→</span>
+      <span className="operator-node">$+$<small>write</small></span><span className="rail-arrow">→</span>
+      <span className="state-token">$c_t$</span>
+    </div>
+    <div className="gate-grid">
+      <div className="gate-card">
+        <span className="gate-symbol">$f_t$</span>
+        <strong>Forget gate</strong>
+        <small>What old memory survives?</small>
+        <code>$\sigma(W_f[x_t,h_{t-1}]+b_f)$</code>
+      </div>
+      <div className="gate-card">
+        <span className="gate-symbol">$i_t\odot\tilde c_t$</span>
+        <strong>Input path</strong>
+        <small>What new memory is written?</small>
+        <code>$i_t\odot\tanh(W_c[x_t,h_{t-1}]+b_c)$</code>
+      </div>
+      <div className="gate-card">
+        <span className="gate-symbol">$o_t$</span>
+        <strong>Output gate</strong>
+        <small>What memory is exposed?</small>
+        <code>$h_t=o_t\odot\tanh(c_t)$</code>
+      </div>
+    </div>
+    <div className="diagram-source"><span>$x_t$</span><span>+</span><span>$h_{t-1}$</span><small>shared input to every gate</small></div>
+  </div>
+  <figcaption><strong>Figure 3.</strong> The LSTM separates persistent memory $c_t$ from exposed state $h_t$. Gates regulate retaining, writing, and reading rather than replacing the entire state at every step.</figcaption>
+</figure>
+
 $$
 \frac{\partial c_t}{\partial c_{t-1}}=f_t,
 $$
@@ -108,6 +161,34 @@ r_t &= \sigma(W_rx_t+U_rh_{t-1}),\\
 h_t &= (1-z_t)\odot h_{t-1}+z_t\odot\tilde h_t.
 \end{aligned}
 $$
+
+<figure className="concept-figure network-figure">
+  <div className="gru-diagram" role="img" aria-label="GRU cell showing reset and update gates">
+    <div className="diagram-source"><span>$x_t$</span><span>+</span><span>$h_{t-1}$</span><small>current input and previous state</small></div>
+    <div className="gate-grid two-gates">
+      <div className="gate-card">
+        <span className="gate-symbol">$r_t$</span>
+        <strong>Reset gate</strong>
+        <small>How much past enters the candidate?</small>
+        <code>$\tilde h_t=\tanh(W_hx_t+U_h(r_t\odot h_{t-1}))$</code>
+      </div>
+      <div className="gate-card">
+        <span className="gate-symbol">$z_t$</span>
+        <strong>Update gate</strong>
+        <small>Old state or new candidate?</small>
+        <code>$z_t=\sigma(W_zx_t+U_zh_{t-1})$</code>
+      </div>
+    </div>
+    <div className="state-mix">
+      <span className="mix-branch">$(1-z_t)\odot h_{t-1}$<small>keep</small></span>
+      <span className="mix-plus">+</span>
+      <span className="mix-branch">$z_t\odot\tilde h_t$<small>replace</small></span>
+      <span className="rail-arrow">→</span>
+      <span className="state-token">$h_t$</span>
+    </div>
+  </div>
+  <figcaption><strong>Figure 4.</strong> A GRU has no separate cell state. The update gate directly interpolates between the previous state and a reset-controlled candidate.</figcaption>
+</figure>
 
 Both architectures make memory easier to preserve. Neither removes the sequential path $h_{t-1}\to h_t$: step $t$ still waits for step $t-1$, and distant information still travels through many transitions.
 
@@ -162,7 +243,7 @@ The decoder now receives a soft retrieval result rather than one permanent summa
     <span className="figure-arrow">→</span>
     <div className="figure-node">decoder $s$</div>
   </div>
-  <figcaption><strong>Figure 2.</strong> Encoder-decoder attention. Each decoder step forms a new weighted combination of all encoder states.</figcaption>
+  <figcaption><strong>Figure 5.</strong> Encoder-decoder attention. Each decoder step forms a new weighted combination of all encoder states.</figcaption>
 </figure>
 
 This is still an RNN system: recurrence constructs the encoder and decoder states. Attention solves the fixed-context bottleneck, but the recurrent backbone remains.
@@ -217,7 +298,7 @@ The output is not a selected value; it is a weighted retrieval. Because $q$ matc
       <tr><th>context</th><td className="heat-1">.05</td><td className="heat-2">.20</td><td className="heat-2">.25</td><td className="heat-4">.50</td></tr>
     </tbody>
   </table>
-  <figcaption><strong>Attention as a matrix.</strong> Each row is a query distribution over keys and sums to one. Darker cells receive more weight.</figcaption>
+  <figcaption><strong>Figure 6. Attention as a matrix.</strong> Each row is a query distribution over keys and sums to one. Darker cells receive more weight.</figcaption>
 </figure>
 
 ## 6. The Transformer asks whether recurrence is still necessary
@@ -249,7 +330,7 @@ Because self-attention alone is permutation-equivariant, position must be suppli
     <div className="figure-node">Multi-head self-attention</div>
     <div className="figure-node">Token + position representations</div>
   </div>
-  <figcaption><strong>Figure 3.</strong> A Transformer encoder block. Attention mixes positions; the feed-forward network transforms each position independently.</figcaption>
+  <figcaption><strong>Figure 7.</strong> A Transformer encoder block. Attention mixes positions; the feed-forward network transforms each position independently.</figcaption>
 </figure>
 
 The computational path between two tokens is now $O(1)$ layers rather than $O(T)$ recurrent transitions. All positions in a layer can be computed in parallel, although full attention requires $O(T^2)$ pairwise scores.
@@ -282,6 +363,8 @@ The historical progression is not “RNNs failed, so Transformers won.” It is 
   <li><a href="https://arxiv.org/abs/1409.0473">Bahdanau, Cho, and Bengio, “Neural Machine Translation by Jointly Learning to Align and Translate,” 2014.</a></li>
   <li><a href="https://arxiv.org/abs/1508.04025">Luong, Pham, and Manning, “Effective Approaches to Attention-based Neural Machine Translation,” 2015.</a></li>
   <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al., “Attention Is All You Need,” 2017.</a></li>
+  <li><a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/">Olah, “Understanding LSTM Networks,” 2015.</a></li>
+  <li><a href="https://www.d2l.ai/chapter_recurrent-modern/gru.html">Zhang et al., “Gated Recurrent Units,” Dive into Deep Learning.</a></li>
 </ol>
 
 <div className="note"><strong>Draft status.</strong> The mathematical story is complete enough for review; personal examples, hand-drawn figures, and your own voice can be added before publication.</div>
