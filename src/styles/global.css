@@ -54,7 +54,8 @@ a:hover {
 }
 
 a:focus-visible,
-button:focus-visible {
+button:focus-visible,
+summary:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 4px;
 }
@@ -386,6 +387,53 @@ h3 {
 
 .page-header {
   margin-bottom: 4rem;
+}
+
+.blog-series {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.blog-series summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.4rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.blog-series summary::-webkit-details-marker {
+  display: none;
+}
+
+.blog-series summary::after {
+  content: "+";
+  font: 1.5rem var(--mono);
+}
+
+.blog-series[open] summary::after {
+  content: "−";
+}
+
+.blog-series summary strong,
+.blog-series summary small {
+  display: block;
+}
+
+.blog-series summary strong {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  letter-spacing: -0.035em;
+}
+
+.blog-series summary small {
+  margin-top: 0.25rem;
+  color: var(--muted);
+}
+
+.blog-series .post-list {
+  padding-bottom: 1rem;
 }
 
 .back-link {

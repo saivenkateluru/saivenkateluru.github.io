@@ -118,6 +118,15 @@ test("attention draft renders mathematics and named references", async () => {
   assert.match(html, /class="attention-heatmap"/);
 });
 
+test("blog groups posts under the ML Understood series", async () => {
+  const html = await readBuilt("blog/index.html");
+
+  assert.match(html, /<details class="blog-series">/);
+  assert.match(html, /<summary>[\s\S]*ML Understood/);
+  assert.match(html, /The Road to Attention Is All You Need/);
+  assert.doesNotMatch(html, /Machine learning can be understood/);
+});
+
 test("published pages include discovery metadata", async () => {
   const html = await readBuilt("blog/attention-is-all-you-need/index.html");
   const rss = await readBuilt("rss.xml");
