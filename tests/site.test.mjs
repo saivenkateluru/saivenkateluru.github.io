@@ -74,11 +74,9 @@ test("homepage terminal accepts commands", async () => {
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /Unknown command/);
   assert.doesNotMatch(html, /about:\s*"\/"/);
-  assert.match(html, /cat current\.txt/);
-  assert.match(html, /cat previous\.txt/);
-  assert.match(html, /ls research_interests\//);
-  assert.match(html, /open blog/);
-  assert.match(html, /ArrowUp/);
+  assert.match(html, /Commands: about, academics, blog, publications, projects, whoami, clear/);
+  assert.doesNotMatch(html, /open blog/);
+  assert.doesNotMatch(html, /ArrowUp/);
   assert.match(html, /requestSubmit/);
 });
 
