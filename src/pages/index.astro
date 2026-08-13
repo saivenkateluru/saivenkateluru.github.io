@@ -1,0 +1,137 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout>
+  <section class="terminal-card" aria-labelledby="identity-heading">
+    <div class="terminal-bar" aria-hidden="true">
+      <span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span>
+      <span class="terminal-title">sai@replab — profile</span>
+    </div>
+    <div class="terminal-body">
+      <h1 id="identity-heading" class="mobile-name">Eluru<br />Sai Venkat</h1>
+      <pre class="ascii-name" aria-label="Eluru Sai Venkat">
+███████╗██╗     ██╗   ██╗██████╗ ██╗   ██╗
+██╔════╝██║     ██║   ██║██╔══██╗██║   ██║
+█████╗  ██║     ██║   ██║██████╔╝██║   ██║
+██╔══╝  ██║     ██║   ██║██╔══██╗██║   ██║
+███████╗███████╗╚██████╔╝██║  ██║╚██████╔╝
+╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝
+
+███████╗ █████╗ ██╗    ██╗   ██╗███████╗███╗   ██╗██╗  ██╗ █████╗ ████████╗
+██╔════╝██╔══██╗██║    ██║   ██║██╔════╝████╗  ██║██║ ██╔╝██╔══██╗╚══██╔══╝
+███████╗███████║██║    ██║   ██║█████╗  ██╔██╗ ██║█████╔╝ ███████║   ██║
+╚════██║██╔══██║██║    ╚██╗ ██╔╝██╔══╝  ██║╚██╗██║██╔═██╗ ██╔══██║   ██║
+███████║██║  ██║██║     ╚████╔╝ ███████╗██║ ╚████║██║  ██╗██║  ██║   ██║
+╚══════╝╚═╝  ╚═╝╚═╝      ╚═══╝  ╚══════╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝</pre
+      >
+
+      <div class="terminal-section">
+        <span class="terminal-label">$ cat current.txt</span>
+        <p>
+          Second-year <strong>M.Tech in Artificial Intelligence</strong> student at the
+          <strong>Representation Learning Lab (RepLab), IISc Bengaluru</strong> · Aug 2025–Present.<br />
+          Advised by <a href="https://prathosh.in/">Dr. Prathosh A.P.</a>
+        </p>
+      </div>
+
+      <div class="terminal-section">
+        <span class="terminal-label">$ cat previous.txt</span>
+        <p>
+          Intern, LatentForce AI · May 2026–Jul 2026<br />
+          Samsung R&amp;D Institute, Delhi · Jul 2023–Nov 2024<br />
+          B.Tech in Electrical Engineering, IIT Madras · Graduated 2023
+        </p>
+      </div>
+
+      <div class="terminal-section">
+        <span class="terminal-label">$ ls research_interests/</span>
+        <ul class="interest-list">
+          <li>Self-Improving Agents</li>
+          <li>Continual Learning</li>
+          <li>Inference Optimization</li>
+        </ul>
+      </div>
+
+      <div class="terminal-interactive">
+        <div id="terminal-output" aria-live="polite"></div>
+        <form id="terminal-form">
+          <label for="terminal-command"><span aria-hidden="true">$</span><span class="sr-only">Terminal command</span></label>
+          <input
+            id="terminal-command"
+            name="command"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="type help and press Enter"
+          />
+          <button type="submit">run</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <div class="home-grid">
+    <section>
+      <div class="section-heading">
+        <h2>Latest writing</h2>
+        <a href="/blog/">All posts →</a>
+      </div>
+      <ul class="post-list">
+        <li>
+          <span class="meta">Draft · Deep Learning</span>
+          <h3><a href="/blog/attention-is-all-you-need/">The Road to Attention Is All You Need</a></h3>
+          <p>RNNs, gated recurrence, encoder-decoder attention, and the step that made recurrence optional.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <div class="section-heading"><h2>Now</h2></div>
+      <div class="content-card">
+        <h3>Learning in public</h3>
+        <p>Mathematical notes on generative models, agents, and efficient inference.</p>
+      </div>
+      <div class="content-card">
+        <h3>Building</h3>
+        <p>This site and a reusable workflow for rigorous ML writing.</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const form = document.querySelector<HTMLFormElement>("#terminal-form");
+    const input = document.querySelector<HTMLInputElement>("#terminal-command");
+    const output = document.querySelector<HTMLDivElement>("#terminal-output");
+    const routes: Record<string, string> = {
+      about: "/",
+      academics: "/academics/",
+      blog: "/blog/",
+      publications: "/publications/",
+      projects: "/projects/",
+    };
+
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const command = input?.value.trim().toLowerCase() ?? "";
+      if (!command || !output || !input) return;
+
+      if (command === "clear") {
+        output.replaceChildren();
+      } else if (routes[command]) {
+        window.location.href = routes[command];
+      } else {
+        const response = command === "help"
+          ? "Commands: about, academics, blog, publications, projects, whoami, clear"
+          : command === "whoami"
+            ? "Eluru Sai Venkat — M.Tech AI, RepLab, IISc"
+            : `Unknown command: ${command}. Type help.`;
+        const line = document.createElement("p");
+        line.textContent = `$ ${command}\n${response}`;
+        output.append(line);
+      }
+
+      input.value = "";
+    });
+  </script>
+</BaseLayout>
