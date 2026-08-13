@@ -32,6 +32,7 @@ html {
   color: var(--text);
   font-family: var(--sans);
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -661,6 +662,16 @@ footer {
 
   .mobile-name {
     display: block;
+  }
+
+  .terminal-body {
+    padding: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+
+  .terminal-section {
+    padding: 1rem 0;
   }
 
   .figure-flow {
