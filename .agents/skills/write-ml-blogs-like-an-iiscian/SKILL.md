@@ -23,6 +23,7 @@ Do not create another nested directory when the current directory is already the
 
 ## Article standard
 
+- Always write mathematics in LaTeX: use `$...$` for inline expressions and `$$...$$` for displayed equations. Do not substitute plain text, Unicode approximations, or images for mathematical notation.
 - Start with the motivating problem, then follow **definition → obstruction → remedy → boxed result**.
 - Derive every important mathematical claim; do not replace algebra with prose such as “by the chain rule.”
 - Introduce notation before using it and distinguish full derivatives from individual computational paths.
@@ -35,7 +36,7 @@ When the project-local `learn-from-prathosh` skill is available, use its derivat
 ## Figures and sources
 
 - Prefer the author's tightly cropped GoodNotes figures for intuition, diagrams, and derivation flow.
-- Keep important equations in KaTeX so they remain searchable, selectable, accessible, and responsive.
+- Render LaTeX with KaTeX so equations remain searchable, selectable, accessible, and responsive.
 - Give every figure useful alt text and a precise caption.
 - Caption original notes as `Author's handwritten notes.`
 - Attribute external figures only to verified sources; if authorship is unknown, link the document without guessing an author.
