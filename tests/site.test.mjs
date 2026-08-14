@@ -116,11 +116,14 @@ test("sequence-model draft renders derivations and attributed figures", async ()
   assert.match(html, /Attention Is All You Need/);
   assert.doesNotMatch(html, /,ldots/);
   assert.match(html, /aria-label="Article contents"/);
-  assert.match(html, /rnn-unrolled-notes\.png/);
+  assert.match(html, /rnn-architecture-analytics-vidhya\.webp/);
   assert.match(html, /bptt-jacobian-notes\.png/);
   assert.match(html, /lstm-gates-lecture\.png/);
   assert.match(html, /gru-cell-d2l\.svg/);
   assert.match(html, /encoder-decoder-attention-lecture\.png/);
+  assert.match(html, /cs231n\.github\.io\/rnn/);
+  assert.match(html, /chapter_recurrent-neural-networks/);
+  assert.doesNotMatch(html, /Prathosh/);
   assert.doesNotMatch(html, /MultiHeadAttention|Transformer encoder|query-key-value/i);
 });
 

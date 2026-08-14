@@ -48,8 +48,8 @@ $$
 The same parameters are reused at every time step. Thus $h_t$ is not merely a feature vector for $x_t$; recursively, it is a learned summary of the complete prefix $x_{1:t}$.
 
 <figure className="source-figure">
-  <img src="/blog/from-recurrent-memory-to-attention/rnn-unrolled-notes.png" alt="Lecture notes showing a recurrent neural network unrolled through time" loading="lazy" />
-  <figcaption><strong>Figure 1.</strong> An RNN unrolled through time. Every green cell represents the same transition function with shared parameters. Adapted from Prof. Prathosh A. P.'s lecture notes.</figcaption>
+  <img src="/blog/from-recurrent-memory-to-attention/rnn-architecture-analytics-vidhya.webp" alt="A recurrent neural network shown as a recurrent cell and unrolled through three time steps" loading="lazy" />
+  <figcaption><strong>Figure 1.</strong> A recurrent cell and its time-unrolled computation graph. Every blue cell uses the same parameters. Source: <a href="https://cdn.analyticsvidhya.com/wp-content/uploads/2024/09/image-80.webp">Analytics Vidhya</a>.</figcaption>
 </figure>
 
 For token-level supervision, take
@@ -121,7 +121,7 @@ $$
 
 <figure className="source-figure source-figure--portrait">
   <img src="/blog/from-recurrent-memory-to-attention/bptt-jacobian-notes.png" alt="Lecture derivation of the recurrent Jacobian product in backpropagation through time" loading="lazy" />
-  <figcaption><strong>Figure 2.</strong> The chain-rule expansion that produces the product of recurrent Jacobians. Adapted from Prof. Prathosh A. P.'s lecture notes.</figcaption>
+  <figcaption><strong>Figure 2.</strong> The chain-rule expansion that produces the product of recurrent Jacobians. Source: <a href="https://drive.google.com/file/d/1e6Lmsry-Gk6x8xfrFH6ukN-7AO09Zkc3/view">RNN/BPTT lecture notes shared for this article</a>.</figcaption>
 </figure>
 
 The complete sequence loss contributes at every later time. A convenient backward recursion is
@@ -183,7 +183,7 @@ If the product repeatedly expands vectors instead, the gradient can grow exponen
 
 <figure className="source-figure source-figure--portrait">
   <img src="/blog/from-recurrent-memory-to-attention/gradient-failure-notes.png" alt="Lecture notes explaining vanishing and exploding recurrent gradients using a product of matrix norms" loading="lazy" />
-  <figcaption><strong>Figure 3.</strong> Long-range credit assignment is controlled by a product of local Jacobians. Adapted from Prof. Prathosh A. P.'s lecture notes.</figcaption>
+  <figcaption><strong>Figure 3.</strong> Long-range credit assignment is controlled by a product of local Jacobians. Source: <a href="https://drive.google.com/file/d/1e6Lmsry-Gk6x8xfrFH6ukN-7AO09Zkc3/view">RNN/BPTT lecture notes shared for this article</a>.</figcaption>
 </figure>
 
 <div className="takeaway">The problem is not recurrence by itself. It is forcing every long-range gradient through a long product of dense, nonlinear state-transition Jacobians.</div>
@@ -211,7 +211,7 @@ The forget gate $f_t$ controls retention, the input gate $i_t$ controls writing,
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/lstm-gates-lecture.png" alt="Lecture slide showing the forget, input, and output gates of an LSTM" loading="lazy" />
-  <figcaption><strong>Figure 4.</strong> The three decisions made by an LSTM cell: retain, write, and expose. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
+  <figcaption><strong>Figure 4.</strong> The three decisions made by an LSTM cell: retain, write, and expose. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 Now isolate the direct edge $c_{j-1}\rightarrow c_j$ in the computation graph. Holding the gates fixed along this edge,
@@ -323,14 +323,14 @@ $$
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/seq2seq-model-lecture.png" alt="Lecture slide showing a recurrent encoder-decoder sequence-to-sequence model" loading="lazy" />
-  <figcaption><strong>Figure 6.</strong> A recurrent encoder consumes the source sequence and a recurrent decoder generates the target sequence. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
+  <figcaption><strong>Figure 6.</strong> A recurrent encoder consumes the source sequence and a recurrent decoder generates the target sequence. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 The same vector $c$ must preserve every source detail and serve every decoder step. Gating may help information reach $h_T^{\mathrm{enc}}$, but it does not remove this fixed-vector bottleneck.
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/seq2seq-bottleneck-lecture.png" alt="Lecture slide showing the final encoder state being passed to every decoder step" loading="lazy" />
-  <figcaption><strong>Figure 7.</strong> The fixed-context bottleneck: the final encoder representation is the decoder's only view of the source. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
+  <figcaption><strong>Figure 7.</strong> The fixed-context bottleneck: the final encoder representation is the decoder's only view of the source. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 The natural question is: why should the decoder use the same summary while producing every output token?
@@ -378,14 +378,14 @@ then $c_m$ is dominated by $h_4$, while still remaining a differentiable weighte
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/encoder-decoder-attention-lecture.png" alt="Lecture slide showing attention weights from encoder states to a decoder context" loading="lazy" />
-  <figcaption><strong>Figure 8.</strong> At each decoder step, attention constructs a new weighted summary of the encoder states. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
+  <figcaption><strong>Figure 8.</strong> At each decoder step, attention constructs a new weighted summary of the encoder states. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 The matrix $[\alpha_{m,t}]$ can be visualized as a soft alignment between target and source positions.
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/attention-map-lecture.png" alt="Heatmap of learned attention alignments between source and target words" loading="lazy" />
-  <figcaption><strong>Figure 9.</strong> Attention weights often expose a soft source-target alignment. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
+  <figcaption><strong>Figure 9.</strong> Attention weights often expose a soft source-target alignment. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 Attention changes two things:
@@ -406,12 +406,14 @@ But this model is still recurrent: encoder states and decoder states are compute
 
 ## References
 
-1. Prathosh A. P., [Lecture notes on recurrent neural networks and backpropagation through time](https://drive.google.com/file/d/1e6Lmsry-Gk6x8xfrFH6ukN-7AO09Zkc3/view).
-2. Prathosh A. P., [Lecture slides on LSTMs, sequence-to-sequence models, and attention](https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view).
-3. Sepp Hochreiter and Jürgen Schmidhuber, [Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf), 1997.
-4. Kyunghyun Cho et al., [Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078), 2014.
-5. Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio, [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473), 2015.
-6. Aston Zhang et al., [Gated Recurrent Units](https://d2l.ai/chapter_recurrent-modern/gru.html), *Dive into Deep Learning*.
-7. Ashish Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762), 2017.
+1. Stanford CS231n, [Recurrent Neural Networks](https://cs231n.github.io/rnn/#intro), course notes.
+2. Aston Zhang et al., [Recurrent Neural Networks](https://d2l.ai/chapter_recurrent-neural-networks/index.html), *Dive into Deep Learning*.
+3. [RNN and BPTT lecture notes](https://drive.google.com/file/d/1e6Lmsry-Gk6x8xfrFH6ukN-7AO09Zkc3/view), course handout shared for this article.
+4. [LSTM, sequence-to-sequence, and attention lecture slides](https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view), course handout shared for this article.
+5. Sepp Hochreiter and Jürgen Schmidhuber, [Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf), 1997.
+6. Kyunghyun Cho et al., [Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078), 2014.
+7. Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio, [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473), 2015.
+8. Aston Zhang et al., [Gated Recurrent Units](https://d2l.ai/chapter_recurrent-modern/gru.html), *Dive into Deep Learning*.
+9. Ashish Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762), 2017.
 
 </BaseLayout>
