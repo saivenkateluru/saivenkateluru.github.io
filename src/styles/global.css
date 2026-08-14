@@ -555,313 +555,44 @@ h3 {
   font-size: 0.95rem;
 }
 
-.concept-figure {
+.source-figure {
   margin: 2.5rem 0;
-  padding: 1.25rem;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
   border: 1px solid var(--border);
   border-radius: 0.65rem;
   background: #ffffff;
   color: #111111;
 }
 
-.network-figure {
-  padding: clamp(1rem, 3vw, 1.75rem);
-}
-
-.rnn-unroll {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.65rem;
-  overflow-x: auto;
-  padding: 1rem 0.25rem 1.5rem;
-}
-
-.rnn-step {
-  display: grid;
-  flex: 0 0 auto;
-  justify-items: center;
-  gap: 0.35rem;
-}
-
-.diagram-input,
-.diagram-output,
-.state-token {
-  min-width: 3.25rem;
-  padding: 0.45rem 0.65rem;
-  border: 1px solid #777777;
-  border-radius: 999px;
-  background: #ffffff;
-  text-align: center;
-  font: 700 0.82rem var(--mono);
-}
-
-.recurrent-cell {
-  display: grid;
-  min-width: 6rem;
-  min-height: 5rem;
-  place-items: center;
-  border: 2px solid #111111;
-  border-radius: 0.65rem;
-  background: #ededeb;
-  font: 700 0.9rem var(--mono);
-}
-
-.recurrent-cell small,
-.operator-node small,
-.mix-branch small {
+.source-figure img {
   display: block;
-  color: #666666;
-  font: 0.62rem var(--mono);
+  width: 100%;
+  height: auto;
+  border-radius: 0.3rem;
 }
 
-.vertical-arrow,
-.state-arrow,
-.rail-arrow {
-  color: #111111;
-  font: 1.35rem var(--mono);
+.source-figure--portrait img {
+  max-height: 900px;
+  object-fit: contain;
 }
 
-.state-arrow.dashed {
-  letter-spacing: 0.15em;
+.doubt {
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
 }
 
-.diagram-key {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem 1.25rem;
-  margin-bottom: 1rem;
-  color: #555555;
-  font: 0.72rem var(--mono);
-}
-
-.diagram-key span {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.key-box {
-  width: 0.85rem;
-  height: 0.85rem;
-  border: 1px solid #111111;
-  background: #ededeb;
-}
-
-.lstm-diagram,
-.gru-diagram {
-  display: grid;
-  gap: 1.25rem;
-  padding: 0.5rem 0 1.25rem;
-}
-
-.state-rail,
-.state-mix {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  overflow-x: auto;
-  padding: 0.6rem 0;
-}
-
-.state-rail {
-  border-top: 2px solid #111111;
-  border-bottom: 2px solid #111111;
-  background: #f7f7f5;
-}
-
-.operator-node {
-  display: grid;
-  min-width: 4.6rem;
-  place-items: center;
-  padding: 0.55rem;
-  border: 2px solid #111111;
-  border-radius: 0.45rem;
-  background: #ffffff;
-  font: 700 0.82rem var(--mono);
-}
-
-.gate-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.gate-grid.two-gates {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.gate-card {
-  position: relative;
-  min-width: 0;
-  padding: 1rem;
-  border: 1px solid #999999;
-  border-radius: 0.55rem;
-  background: #f7f7f5;
-}
-
-.gate-card::before {
-  position: absolute;
-  top: -1.3rem;
-  left: 50%;
-  height: 1.3rem;
-  border-left: 1px dashed #777777;
-  content: "";
-}
-
-.gate-card strong,
-.gate-card small,
-.gate-card code {
-  display: block;
-}
-
-.gate-symbol {
-  display: grid;
-  width: 2.5rem;
-  height: 2.5rem;
-  margin-bottom: 0.7rem;
-  place-items: center;
-  border: 2px solid #111111;
-  border-radius: 50%;
-  background: #ffffff;
+.doubt summary {
+  cursor: pointer;
   font-weight: 700;
 }
 
-.gate-card small {
-  min-height: 2.5rem;
-  margin: 0.3rem 0 0.7rem;
-  color: #555555;
+.doubt p {
+  margin-bottom: 0;
+  color: var(--muted);
 }
-
-.gate-card code {
-  overflow-x: auto;
-  padding-top: 0.7rem;
-  border-top: 1px solid #cccccc;
-  color: #111111;
-  font: 0.7rem var(--mono);
-  white-space: nowrap;
-}
-
-.diagram-source {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border: 1px dashed #777777;
-  border-radius: 0.45rem;
-  font: 700 0.8rem var(--mono);
-}
-
-.diagram-source small {
-  width: 100%;
-  color: #555555;
-  text-align: center;
-  font-weight: 400;
-}
-
-.mix-branch {
-  min-width: 10rem;
-  padding: 0.75rem;
-  border: 1px solid #777777;
-  border-radius: 0.45rem;
-  background: #f7f7f5;
-  text-align: center;
-  font: 700 0.75rem var(--mono);
-}
-
-.mix-plus {
-  font: 1.4rem var(--mono);
-}
-
-.figure-flow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  overflow-x: auto;
-  padding: 1.5rem 0.5rem;
-}
-
-.figure-node {
-  flex: 0 0 auto;
-  min-width: 84px;
-  padding: 0.8rem;
-  border: 1.5px solid #111111;
-  border-radius: 0.4rem;
-  text-align: center;
-  font: 700 0.86rem var(--mono);
-}
-
-.figure-arrow {
-  font: 1.5rem var(--mono);
-}
-
-.figure-stack {
-  display: grid;
-  gap: 0.55rem;
-  width: min(420px, 100%);
-  margin: 1.2rem auto;
-}
-
-.figure-stack .figure-node {
-  width: 100%;
-}
-
-.path-comparison {
-  display: grid;
-  gap: 1rem;
-  padding: 1.2rem 0.5rem;
-  overflow-x: auto;
-}
-
-.path-row {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-width: max-content;
-  font: 0.86rem var(--mono);
-}
-
-.path-row strong {
-  width: 8rem;
-}
-
-.path-row > span {
-  padding: 0.45rem 0.65rem;
-  border: 1px solid #111111;
-  border-radius: 0.35rem;
-}
-
-.path-row i {
-  font-style: normal;
-}
-
-.attention-heatmap {
-  width: 100%;
-  margin: 1rem 0;
-  border-collapse: collapse;
-  font: 0.78rem var(--mono);
-  text-align: center;
-}
-
-.attention-heatmap th,
-.attention-heatmap td {
-  padding: 0.65rem 0.35rem;
-  border: 3px solid #ffffff;
-}
-
-.attention-heatmap th {
-  background: #f0f0ee;
-}
-
-.attention-heatmap .heat-1 { background: #e5e5e5; }
-.attention-heatmap .heat-2 { background: #bbbbbb; }
-.attention-heatmap .heat-3 { background: #777777; color: #ffffff; }
-.attention-heatmap .heat-4 { background: #222222; color: #ffffff; }
 
 figcaption {
   padding-top: 1rem;
@@ -935,39 +666,8 @@ footer {
     padding: 1rem 0;
   }
 
-  .figure-flow {
-    justify-content: flex-start;
-  }
-
   .article-toc ol {
     grid-template-columns: 1fr;
-  }
-
-  .rnn-unroll {
-    gap: 0.35rem;
-  }
-
-  .rnn-step:nth-of-type(3),
-  .rnn-step:nth-of-type(2) + .state-arrow {
-    display: none;
-  }
-
-  .recurrent-cell {
-    min-width: 5rem;
-  }
-
-  .gate-grid,
-  .gate-grid.two-gates {
-    grid-template-columns: 1fr;
-  }
-
-  .gate-card::before {
-    display: none;
-  }
-
-  .state-rail,
-  .state-mix {
-    justify-content: flex-start;
   }
 
   footer {

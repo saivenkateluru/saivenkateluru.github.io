@@ -6,11 +6,11 @@
     <description>Mathematical notes on machine learning and artificial intelligence.</description>
     <language>en</language>
     <item>
-      <title>The Road to Attention Is All You Need</title>
+      <title>From Recurrent Memory to Attention</title>
       <link>https://saivenkateluru.github.io/blog/attention-is-all-you-need/</link>
       <guid>https://saivenkateluru.github.io/blog/attention-is-all-you-need/</guid>
       <pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate>
-      <description>A mathematical path from RNNs and gated recurrence to attention and the Transformer.</description>
+      <description>RNN forward dynamics, BPTT Jacobians, gated gradient transport, and classical encoder-decoder attention.</description>
     </item>
   </channel>
 </rss>

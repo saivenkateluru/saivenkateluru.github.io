@@ -105,20 +105,23 @@ test("theme control is icon-only alongside social links", async () => {
   assert.doesNotMatch(html, />go (?:light|dark)<\/button>/);
 });
 
-test("attention draft renders mathematics and named references", async () => {
+test("sequence-model draft renders derivations and attributed figures", async () => {
   const html = await readBuilt("blog/attention-is-all-you-need/index.html");
 
   assert.match(html, /katex/);
+  assert.match(html, /From Recurrent Memory to Attention/);
+  assert.match(html, /Backpropagation through time/);
+  assert.match(html, /cell path/);
   assert.match(html, /Vaswani et al\./);
   assert.match(html, /Attention Is All You Need/);
   assert.doesNotMatch(html, /,ldots/);
   assert.match(html, /aria-label="Article contents"/);
-  assert.match(html, /class="rnn-unroll"/);
-  assert.match(html, /class="lstm-diagram"/);
-  assert.match(html, /class="gru-diagram"/);
-  assert.match(html, /class="path-comparison"/);
-  assert.match(html, /Worked example/);
-  assert.match(html, /class="attention-heatmap"/);
+  assert.match(html, /rnn-unrolled-notes\.png/);
+  assert.match(html, /bptt-jacobian-notes\.png/);
+  assert.match(html, /lstm-gates-lecture\.png/);
+  assert.match(html, /gru-cell-d2l\.svg/);
+  assert.match(html, /encoder-decoder-attention-lecture\.png/);
+  assert.doesNotMatch(html, /MultiHeadAttention|Transformer encoder|query-key-value/i);
 });
 
 test("blog groups posts under the ML Understood series", async () => {
@@ -126,7 +129,7 @@ test("blog groups posts under the ML Understood series", async () => {
 
   assert.match(html, /<details class="blog-series">/);
   assert.match(html, /<summary>[\s\S]*ML Understood/);
-  assert.match(html, /The Road to Attention Is All You Need/);
+  assert.match(html, /From Recurrent Memory to Attention/);
   assert.doesNotMatch(html, /Machine learning can be understood/);
 });
 
@@ -139,6 +142,6 @@ test("published pages include discovery metadata", async () => {
   assert.match(html, /rel="alternate" type="application\/rss\+xml"/);
   assert.match(html, /property="og:title"/);
   assert.match(html, /name="twitter:card" content="summary"/);
-  assert.match(rss, /The Road to Attention Is All You Need/);
+  assert.match(rss, /From Recurrent Memory to Attention/);
   await readBuilt("favicon.svg");
 });

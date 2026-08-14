@@ -1,21 +1,21 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 <BaseLayout
-  title="The Road to Attention Is All You Need"
-  description="A mathematical path from RNNs and gated recurrence to attention and the Transformer."
+  title="From Recurrent Memory to Attention"
+  description="RNN forward dynamics, backpropagation through time, gated gradient transport, and classical encoder-decoder attention."
   article
 >
   <header className="article-header">
-    <p className="eyebrow">Deep Learning · Structured draft</p>
-    <h1>The Road to Attention Is All You Need</h1>
-    <p className="lede">The Transformer did not begin by inventing attention. It began by asking whether attention still needed recurrence around it.</p>
+    <p className="eyebrow">ML Understood · Sequence Models</p>
+    <h1>From Recurrent Memory to Attention</h1>
+    <p className="lede">A first-principles account of what an RNN computes, where its long Jacobian product comes from, how LSTMs and GRUs create better gradient paths, and why encoder-decoder attention became necessary.</p>
     <div className="article-meta">
       <span className="meta">Eluru Sai Venkat</span>
       <span className="meta">August 2026</span>
-      <span className="meta">~15 min</span>
+      <span className="meta">~25 min</span>
     </div>
     <div className="tags">
-      <span className="tag">RNN</span><span className="tag">LSTM</span><span className="tag">GRU</span><span className="tag">Attention</span><span className="tag">Transformer</span>
+      <span className="tag">RNN</span><span className="tag">BPTT</span><span className="tag">LSTM</span><span className="tag">GRU</span><span className="tag">Attention</span>
     </div>
     <a className="back-link" href="/blog/" aria-label="Back to blog">←</a>
   </header>
@@ -23,349 +23,395 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <nav className="article-toc" aria-label="Article contents">
     <strong>In this article</strong>
     <ol>
-      <li><a href="#1-sequences-require-memory">RNNs</a></li>
-      <li><a href="#2-lstms-and-grus-improve-the-memory-mechanism">LSTMs and GRUs</a></li>
-      <li><a href="#3-encoder-decoder-models-expose-a-second-bottleneck">The bottleneck</a></li>
-      <li><a href="#4-attention-begins-as-retrieval-over-rnn-states">RNN attention</a></li>
-      <li><a href="#5-from-alignment-to-query-key-and-value">Self-attention</a></li>
-      <li><a href="#6-the-transformer-asks-whether-recurrence-is-still-necessary">The Transformer</a></li>
+      <li><a href="#1-a-recurrent-model-for-sequences">The recurrent model</a></li>
+      <li><a href="#2-backpropagation-through-time">Backpropagation through time</a></li>
+      <li><a href="#3-why-gradients-vanish-or-explode">Vanishing and exploding gradients</a></li>
+      <li><a href="#4-gated-additive-memory-paths">LSTM and GRU</a></li>
+      <li><a href="#5-the-encoder-decoder-bottleneck">The encoder-decoder bottleneck</a></li>
+      <li><a href="#6-attention-as-dynamic-retrieval">Attention as retrieval</a></li>
     </ol>
   </nav>
 
-## 1. Sequences require memory
+## 1. A recurrent model for sequences
 
-Let a sequence be $x_{1:T}=(x_1,\ldots,x_T)$, where $x_t\in\mathbb{R}^{d_x}$. A feed-forward network treats inputs independently, but language does not: the interpretation of $x_t$ depends on what came before it. A recurrent neural network introduces a state $h_t\in\mathbb{R}^{d_h}$:
-
-$$
-h_t=\phi(W_xx_t+W_hh_{t-1}+b), \qquad y_t=g(W_oh_t).
-$$
-
-The state is a learned summary of the prefix $x_{1:t}$. Parameters are shared across time, so the same transition rule can process sequences of different lengths.
-
-<figure className="concept-figure network-figure">
-  <div className="rnn-unroll" role="img" aria-label="An RNN unrolled over four time steps">
-    <div className="rnn-step">
-      <span className="diagram-output">$y_1$</span><span className="vertical-arrow">↑</span>
-      <span className="recurrent-cell"><small>shared cell</small>$h_1$</span><span className="vertical-arrow">↑</span>
-      <span className="diagram-input">$x_1$</span>
-    </div>
-    <span className="state-arrow">→</span>
-    <div className="rnn-step">
-      <span className="diagram-output">$y_2$</span><span className="vertical-arrow">↑</span>
-      <span className="recurrent-cell"><small>shared cell</small>$h_2$</span><span className="vertical-arrow">↑</span>
-      <span className="diagram-input">$x_2$</span>
-    </div>
-    <span className="state-arrow">→</span>
-    <div className="rnn-step">
-      <span className="diagram-output">$y_3$</span><span className="vertical-arrow">↑</span>
-      <span className="recurrent-cell"><small>shared cell</small>$h_3$</span><span className="vertical-arrow">↑</span>
-      <span className="diagram-input">$x_3$</span>
-    </div>
-    <span className="state-arrow dashed">⇢</span>
-    <div className="rnn-step">
-      <span className="diagram-output">$y_T$</span><span className="vertical-arrow">↑</span>
-      <span className="recurrent-cell"><small>shared cell</small>$h_T$</span><span className="vertical-arrow">↑</span>
-      <span className="diagram-input">$x_T$</span>
-    </div>
-  </div>
-  <div className="diagram-key"><span><i className="key-box"></i> learned recurrent update</span><span>horizontal arrows carry state through time</span></div>
-  <figcaption><strong>Figure 1.</strong> An RNN unrolled through time. Each copy uses the same parameters; only the state and input change.</figcaption>
-</figure>
-
-### The ideal goal
-
-We would like $h_t$ to retain every earlier fact relevant to future predictions. But both information and gradients must repeatedly pass through the same transition. For a loss $L$ at time $T$,
-
-$$
-\frac{\partial L}{\partial h_t}
-=
-\frac{\partial L}{\partial h_T}
-\prod_{k=t+1}^{T}\frac{\partial h_k}{\partial h_{k-1}}.
-$$
-
-If the Jacobian factors usually have norm below one, the product shrinks exponentially: the gradient vanishes. If they have norm above one, it can explode. Long-range credit assignment is therefore difficult even before we ask whether one fixed-size vector can preserve a long sentence.
-
-<div className="takeaway">The RNN's strength and weakness are the same: every token is forced through one recurrent state.</div>
-
-<figure className="concept-figure network-figure">
-  <div className="path-comparison">
-    <div className="path-row"><strong>RNN</strong><span>$x_1$</span><i>→</i><span>$h_1$</span><i>→</i><span>$h_2$</span><i>→</i><span>$h_T$</span></div>
-    <div className="path-row"><strong>Self-attention</strong><span>$x_1$</span><i>⟶</i><span>$x_T$</span></div>
-  </div>
-  <figcaption><strong>Figure 2. Path length.</strong> In an RNN, information crosses up to $O(T)$ recurrent transitions. In one self-attention layer, any token can interact directly with any other token.</figcaption>
-</figure>
-
-## 2. LSTMs and GRUs improve the memory mechanism
-
-The Long Short-Term Memory network introduces a cell state $c_t$ with an additive update path. One common formulation is
+Let the input be a sequence $x_{1:T}=(x_1,\ldots,x_T)$ with $x_t\in\mathbb{R}^{d_x}$. A vanilla recurrent neural network maintains a hidden state $h_t\in\mathbb{R}^{d_h}$:
 
 $$
 \begin{aligned}
-f_t &= \sigma(W_f[x_t,h_{t-1}]+b_f),\\
-i_t &= \sigma(W_i[x_t,h_{t-1}]+b_i),\\
-\tilde c_t &= \tanh(W_c[x_t,h_{t-1}]+b_c),\\
-c_t &= f_t\odot c_{t-1}+i_t\odot\tilde c_t,\\
-o_t &= \sigma(W_o[x_t,h_{t-1}]+b_o),\\
+z_t &= W_hh_{t-1}+W_xx_t+b_h,\\
+h_t &= \phi(z_t),\\
+o_t &= W_oh_t+b_o,\\
+p_t &= \operatorname{softmax}(o_t).
+\end{aligned}
+$$
+
+The same parameters are reused at every time step. Thus $h_t$ is not merely a feature vector for $x_t$; recursively, it is a learned summary of the complete prefix $x_{1:t}$.
+
+<figure className="source-figure">
+  <img src="/blog/from-recurrent-memory-to-attention/rnn-unrolled-notes.png" alt="Lecture notes showing a recurrent neural network unrolled through time" loading="lazy" />
+  <figcaption><strong>Figure 1.</strong> An RNN unrolled through time. Every green cell represents the same transition function with shared parameters. Adapted from Prof. Prathosh A. P.'s lecture notes.</figcaption>
+</figure>
+
+For token-level supervision, take
+
+$$
+L=\sum_{t=1}^{T}\ell_t,
+\qquad
+\ell_t=-\log p_t[y_t].
+$$
+
+Although the forward equations are short, two constraints are already visible:
+
+1. **Sequential computation:** $h_t$ cannot be computed before $h_{t-1}$.
+2. **Repeated transport:** information from time $t-k$ must cross $k$ recurrent transitions to affect time $t$.
+
+The second point becomes precise only after we backpropagate.
+
+## 2. Backpropagation through time
+
+Consider a perturbation $dh_{t-1}$. Since
+
+$$
+z_t=W_hh_{t-1}+W_xx_t+b_h,
+$$
+
+we have $dz_t=W_h\,dh_{t-1}$. Applying the elementwise nonlinearity gives
+
+$$
+dh_t=D_t\,dz_t,
+\qquad
+D_t=\operatorname{Diag}\!\left(\phi'(z_t)\right).
+$$
+
+Therefore the one-step hidden-state Jacobian is
+
+$$
+\boxed{
+J_t
+=\frac{\partial h_t}{\partial h_{t-1}}
+=D_tW_h.
+}
+$$
+
+This is where the Jacobian enters: it is simply the local linear map carrying a small change in $h_{t-1}$ to the resulting change in $h_t$.
+
+### Crossing several time steps
+
+Repeated use of the chain rule gives
+
+$$
+\boxed{
+\frac{\partial h_t}{\partial h_{t-k}}
+=J_tJ_{t-1}\cdots J_{t-k+1}.
+}
+$$
+
+For column-vector gradients, a loss at time $t$ sends the signal backward as
+
+$$
+\nabla_{h_{t-k}}\ell_t
+=\left(J_tJ_{t-1}\cdots J_{t-k+1}\right)^\top
+\nabla_{h_t}\ell_t.
+$$
+
+<details className="doubt">
+  <summary>Why does the transpose appear in the backward equation?</summary>
+  <p>The forward differential is $dh_t=J_tdh_{t-1}$. Matching $d\ell=(\nabla_{h_t}\ell)^\top dh_t$ with $d\ell=(\nabla_{h_{t-1}}\ell)^\top dh_{t-1}$ gives $\nabla_{h_{t-1}}\ell=J_t^\top\nabla_{h_t}\ell$.</p>
+</details>
+
+<figure className="source-figure source-figure--portrait">
+  <img src="/blog/from-recurrent-memory-to-attention/bptt-jacobian-notes.png" alt="Lecture derivation of the recurrent Jacobian product in backpropagation through time" loading="lazy" />
+  <figcaption><strong>Figure 2.</strong> The chain-rule expansion that produces the product of recurrent Jacobians. Adapted from Prof. Prathosh A. P.'s lecture notes.</figcaption>
+</figure>
+
+The complete sequence loss contributes at every later time. A convenient backward recursion is
+
+$$
+g_t
+=\nabla_{h_t}L
+=\nabla_{h_t}\ell_t+J_{t+1}^{\top}g_{t+1},
+$$
+
+with $g_T=\nabla_{h_T}\ell_T$. Defining
+
+$$
+\delta_t=\nabla_{z_t}L=D_tg_t,
+$$
+
+the gradient of the shared recurrent matrix accumulates contributions from all its uses:
+
+$$
+\boxed{
+\nabla_{W_h}L
+=\sum_{t=1}^{T}\delta_t h_{t-1}^{\top}.
+}
+$$
+
+This procedure is called **backpropagation through time (BPTT)**: unroll the shared recurrence as a depth-$T$ computation graph, then apply ordinary backpropagation.
+
+## 3. Why gradients vanish or explode
+
+Take spectral norms in the long-range gradient equation:
+
+$$
+\begin{aligned}
+\left\|\nabla_{h_{t-k}}\ell_t\right\|_2
+&\le
+\left(\prod_{j=t-k+1}^{t}\|J_j\|_2\right)
+\left\|\nabla_{h_t}\ell_t\right\|_2\\
+&\le
+\left(\prod_{j=t-k+1}^{t}\|D_j\|_2\|W_h\|_2\right)
+\left\|\nabla_{h_t}\ell_t\right\|_2.
+\end{aligned}
+$$
+
+If every factor satisfies $\|J_j\|_2\le\gamma<1$, then
+
+$$
+\left\|\nabla_{h_{t-k}}\ell_t\right\|_2
+\le \gamma^k\left\|\nabla_{h_t}\ell_t\right\|_2,
+$$
+
+which decays exponentially with the temporal distance $k$. Saturating nonlinearities make this particularly plausible: for $\phi=\tanh$, entries of $D_j$ approach zero when $|z_j|$ is large.
+
+If the product repeatedly expands vectors instead, the gradient can grow exponentially. The optimizer then receives huge, unstable updates; gradient clipping can control their magnitude, but it cannot recreate a signal that has already vanished.
+
+<details className="doubt">
+  <summary>Does $\|J_j\|_2&gt;1$ at every step guarantee an exploding gradient?</summary>
+  <p>No. The norm bound describes the largest possible expansion. Actual explosion also requires the transported gradient to remain aligned with expanding singular directions across many changing Jacobians.</p>
+</details>
+
+<figure className="source-figure source-figure--portrait">
+  <img src="/blog/from-recurrent-memory-to-attention/gradient-failure-notes.png" alt="Lecture notes explaining vanishing and exploding recurrent gradients using a product of matrix norms" loading="lazy" />
+  <figcaption><strong>Figure 3.</strong> Long-range credit assignment is controlled by a product of local Jacobians. Adapted from Prof. Prathosh A. P.'s lecture notes.</figcaption>
+</figure>
+
+<div className="takeaway">The problem is not recurrence by itself. It is forcing every long-range gradient through a long product of dense, nonlinear state-transition Jacobians.</div>
+
+## 4. Gated additive memory paths
+
+LSTMs and GRUs do not make the sequence parallel. Their intervention is different: construct an additive path along which information and gradients can be copied rather than repeatedly rewritten.
+
+### LSTM: a separate cell-state highway
+
+One common LSTM parameterization is
+
+$$
+\begin{aligned}
+f_t &= \sigma(W_fx_t+U_fh_{t-1}+b_f),\\
+i_t &= \sigma(W_ix_t+U_ih_{t-1}+b_i),\\
+\widetilde c_t &= \tanh(W_cx_t+U_ch_{t-1}+b_c),\\
+c_t &= f_t\odot c_{t-1}+i_t\odot\widetilde c_t,\\
+o_t &= \sigma(W_ox_t+U_oh_{t-1}+b_o),\\
 h_t &= o_t\odot\tanh(c_t).
 \end{aligned}
 $$
 
-The forget gate $f_t$ decides what survives, the input gate $i_t$ decides what is written, and the output gate $o_t$ decides what is exposed. Most importantly,
+The forget gate $f_t$ controls retention, the input gate $i_t$ controls writing, and the output gate $o_t$ controls exposure.
 
-<figure className="concept-figure network-figure">
-  <div className="lstm-diagram" role="img" aria-label="LSTM cell showing the cell-state highway and forget, input, and output gates">
-    <div className="state-rail">
-      <span className="state-token">$c_{t-1}$</span><span className="rail-arrow">→</span>
-      <span className="operator-node">$\odot f_t$<small>retain</small></span><span className="rail-arrow">→</span>
-      <span className="operator-node">$+$<small>write</small></span><span className="rail-arrow">→</span>
-      <span className="state-token">$c_t$</span>
-    </div>
-    <div className="gate-grid">
-      <div className="gate-card">
-        <span className="gate-symbol">$f_t$</span>
-        <strong>Forget gate</strong>
-        <small>What old memory survives?</small>
-        <code>$\sigma(W_f[x_t,h_{t-1}]+b_f)$</code>
-      </div>
-      <div className="gate-card">
-        <span className="gate-symbol">$i_t\odot\tilde c_t$</span>
-        <strong>Input path</strong>
-        <small>What new memory is written?</small>
-        <code>$i_t\odot\tanh(W_c[x_t,h_{t-1}]+b_c)$</code>
-      </div>
-      <div className="gate-card">
-        <span className="gate-symbol">$o_t$</span>
-        <strong>Output gate</strong>
-        <small>What memory is exposed?</small>
-        <code>$h_t=o_t\odot\tanh(c_t)$</code>
-      </div>
-    </div>
-    <div className="diagram-source"><span>$x_t$</span><span>+</span><span>$h_{t-1}$</span><small>shared input to every gate</small></div>
-  </div>
-  <figcaption><strong>Figure 3.</strong> The LSTM separates persistent memory $c_t$ from exposed state $h_t$. Gates regulate retaining, writing, and reading rather than replacing the entire state at every step.</figcaption>
+<figure className="source-figure">
+  <img src="/blog/from-recurrent-memory-to-attention/lstm-gates-lecture.png" alt="Lecture slide showing the forget, input, and output gates of an LSTM" loading="lazy" />
+  <figcaption><strong>Figure 4.</strong> The three decisions made by an LSTM cell: retain, write, and expose. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
 </figure>
 
+Now isolate the direct edge $c_{j-1}\rightarrow c_j$ in the computation graph. Holding the gates fixed along this edge,
+
 $$
-\frac{\partial c_t}{\partial c_{t-1}}=f_t,
+F_j
+:=
+\left.\frac{\partial c_j}{\partial c_{j-1}}\right|_{\text{direct cell edge}}
+=\operatorname{Diag}(f_j).
 $$
 
-so the model can learn a nearly identity gradient path by keeping $f_t\approx 1$.
+Hence a gradient travelling only along the cell-state chain obeys
 
-The Gated Recurrent Unit simplifies this idea by merging cell and hidden state:
+$$
+\left.\nabla_{c_{t-k}}L\right|_{\text{cell path}}
+=
+\left(F_tF_{t-1}\cdots F_{t-k+1}\right)^\top
+\nabla_{c_t}L.
+$$
+
+This already shows the change from a vanilla RNN: the repeated factor is a learned diagonal retention gate, not $D_jW_h$.
+
+### From $h_{t-k}$ all the way to $h_t$
+
+To connect this result to the hidden states, isolate the computational path
+
+$$
+h_{t-k}longrightarrow c_{t-k+1}longrightarrow c_{t-k+2}longrightarrow\cdots\longrightarrow c_t\longrightarrow h_t.
+$$
+
+Let
+
+$$
+G_{t-k+1}
+=\frac{\partial c_{t-k+1}}{\partial h_{t-k}},
+$$
+
+which collects how $h_{t-k}$ affects the next forget gate, input gate, and candidate. At the other endpoint,
+
+$$
+D_t^{\text{out}}
+:=\frac{\partial h_t}{\partial c_t}
+=\operatorname{Diag}\!\left(o_t\odot\left[1-\tanh^2(c_t)\right]\right)
+$$
+
+along the direct $c_t\rightarrow h_t$ edge. The contribution of this cell-state path to the long hidden-state Jacobian is therefore
+
+$$
+\boxed{
+\left.\frac{\partial h_t}{\partial h_{t-k}}\right|_{\text{cell path}}
+=D_t^{\text{out}}
+\left(F_tF_{t-1}\cdots F_{t-k+2}\right)
+G_{t-k+1}.
+}
+$$
+
+If the model learns $f_j\approx\mathbf 1$ over the relevant interval, then $F_j\approx I$ and the long middle product stays close to identity. The endpoint derivatives $G_{t-k+1}$ and $D_t^{\text{out}}$ can still attenuate the gradient, but they occur once each; they are not multiplied once per time step. This is how the additive cell path reduces the exponential dependence on distance.
+
+<details className="doubt">
+  <summary>Is the boxed expression the full derivative $\partial h_t/\partial h_{t-k}$?</summary>
+  <p>No. It is one useful path inside the full computation graph. Because every gate also depends on earlier hidden states, the full Jacobian contains additional paths. The point is that the LSTM guarantees a trainable additive route whose repeated factors can remain near identity.</p>
+</details>
+
+### GRU: an additive carry path without a separate cell
+
+A GRU compresses the same principle into one state:
 
 $$
 \begin{aligned}
-z_t &= \sigma(W_zx_t+U_zh_{t-1}),\\
-r_t &= \sigma(W_rx_t+U_rh_{t-1}),\\
-\tilde h_t &= \tanh(W_hx_t+U_h(r_t\odot h_{t-1})),\\
-h_t &= (1-z_t)\odot h_{t-1}+z_t\odot\tilde h_t.
+z_t &= \sigma(W_zx_t+U_zh_{t-1}+b_z),\\
+r_t &= \sigma(W_rx_t+U_rh_{t-1}+b_r),\\
+\widetilde h_t &= \tanh\!\left(W_hx_t+U_h(r_t\odot h_{t-1})+b_h\right),\\
+h_t &= (1-z_t)\odot h_{t-1}+z_t\odot\widetilde h_t.
 \end{aligned}
 $$
 
-<figure className="concept-figure network-figure">
-  <div className="gru-diagram" role="img" aria-label="GRU cell showing reset and update gates">
-    <div className="diagram-source"><span>$x_t$</span><span>+</span><span>$h_{t-1}$</span><small>current input and previous state</small></div>
-    <div className="gate-grid two-gates">
-      <div className="gate-card">
-        <span className="gate-symbol">$r_t$</span>
-        <strong>Reset gate</strong>
-        <small>How much past enters the candidate?</small>
-        <code>$\tilde h_t=\tanh(W_hx_t+U_h(r_t\odot h_{t-1}))$</code>
-      </div>
-      <div className="gate-card">
-        <span className="gate-symbol">$z_t$</span>
-        <strong>Update gate</strong>
-        <small>Old state or new candidate?</small>
-        <code>$z_t=\sigma(W_zx_t+U_zh_{t-1})$</code>
-      </div>
-    </div>
-    <div className="state-mix">
-      <span className="mix-branch">$(1-z_t)\odot h_{t-1}$<small>keep</small></span>
-      <span className="mix-plus">+</span>
-      <span className="mix-branch">$z_t\odot\tilde h_t$<small>replace</small></span>
-      <span className="rail-arrow">→</span>
-      <span className="state-token">$h_t$</span>
-    </div>
-  </div>
-  <figcaption><strong>Figure 4.</strong> A GRU has no separate cell state. The update gate directly interpolates between the previous state and a reset-controlled candidate.</figcaption>
+<figure className="source-figure">
+  <img src="/blog/from-recurrent-memory-to-attention/gru-cell-d2l.svg" alt="GRU computation graph with reset and update gates" loading="lazy" />
+  <figcaption><strong>Figure 5.</strong> A GRU uses a reset gate for constructing the candidate and an update gate for mixing the candidate with the old state. Source: <a href="https://d2l.ai/chapter_recurrent-modern/gru.html">Dive into Deep Learning</a>.</figcaption>
 </figure>
 
-Both architectures make memory easier to preserve. Neither removes the sequential path $h_{t-1}\to h_t$: step $t$ still waits for step $t-1$, and distant information still travels through many transitions.
-
-## 3. Encoder-decoder models expose a second bottleneck
-
-For sequence-to-sequence learning, an encoder RNN reads $x_{1:T}$ and a decoder predicts $y_{1:S}$. The naive design gives the decoder only the final encoder state:
+Along the direct carry edge,
 
 $$
-c=h_T^{\text{enc}},\qquad
-p(y_s\mid y_{<s},x_{1:T})
-=p(y_s\mid y_{<s},c).
+\left.\frac{\partial h_t}{\partial h_{t-1}}\right|_{\text{carry}}
+=\operatorname{Diag}(1-z_t).
 $$
 
-This asks one vector $c$ to represent every source token, regardless of sequence length. Gating improves transport through time, but it does not remove this fixed-vector compression.
+When $z_t\approx0$, the GRU copies the previous state and the direct derivative is near identity. As with the LSTM, this is a protected path within the full Jacobian—not a claim that every gradient path has derivative one.
 
-### Question: must the decoder use the same summary for every output token?
+LSTMs and GRUs therefore address long-range gradient transport. They do **not** address the other RNN limitation: every forward and backward step is still sequential.
 
-No. When producing $y_s$, let it retrieve the encoder states most relevant to that output.
+## 5. The encoder-decoder bottleneck
 
-## 4. Attention begins as retrieval over RNN states
-
-Let encoder states be $h_1,\ldots,h_T$ and decoder state be $s_{s-1}$. Define an alignment score
+In a recurrent sequence-to-sequence model, an encoder processes the source states
 
 $$
-e_{s,t}=a(s_{s-1},h_t),
+h_t^{\mathrm{enc}}
+=f_{\mathrm{enc}}(x_t,h_{t-1}^{\mathrm{enc}}),
 $$
 
-normalize scores across source positions,
+and a decoder generates one target token at a time. The original fixed-context design compresses the complete source into the final encoder state:
 
 $$
-\alpha_{s,t}
-=\frac{\exp(e_{s,t})}{\sum_{j=1}^{T}\exp(e_{s,j})},
+c=h_T^{\mathrm{enc}},
 \qquad
-\sum_{t=1}^{T}\alpha_{s,t}=1,
+s_m=g\!\left(s_{m-1},E(y_{m-1}),c\right).
 $$
 
-and compute a decoder-specific context,
-
-$$
-c_s=\sum_{t=1}^{T}\alpha_{s,t}h_t.
-$$
-
-The decoder now receives a soft retrieval result rather than one permanent summary. The weights $\alpha_{s,t}$ are learned end-to-end and vary with the output position $s$.
-
-<figure className="concept-figure">
-  <div className="figure-flow">
-    <div className="figure-node">$h_1$</div>
-    <div className="figure-node">$h_2$</div>
-    <div className="figure-node">$h_3$</div>
-    <span className="figure-arrow">⇒</span>
-    <div className="figure-node">$c_s=\sum_t\alpha_{s,t}h_t$</div>
-    <span className="figure-arrow">→</span>
-    <div className="figure-node">decoder $s$</div>
-  </div>
-  <figcaption><strong>Figure 5.</strong> Encoder-decoder attention. Each decoder step forms a new weighted combination of all encoder states.</figcaption>
+<figure className="source-figure">
+  <img src="/blog/from-recurrent-memory-to-attention/seq2seq-model-lecture.png" alt="Lecture slide showing a recurrent encoder-decoder sequence-to-sequence model" loading="lazy" />
+  <figcaption><strong>Figure 6.</strong> A recurrent encoder consumes the source sequence and a recurrent decoder generates the target sequence. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
 </figure>
 
-This is still an RNN system: recurrence constructs the encoder and decoder states. Attention solves the fixed-context bottleneck, but the recurrent backbone remains.
+The same vector $c$ must preserve every source detail and serve every decoder step. Gating may help information reach $h_T^{\mathrm{enc}}$, but it does not remove this fixed-vector bottleneck.
 
-<div className="takeaway">Attention first changed how the decoder reads memory; it did not initially replace the recurrent machine that created that memory.</div>
-
-## 5. From alignment to query, key, and value
-
-The retrieval operation becomes clearer when written using three roles. A query $q$ represents what the current position seeks; keys $k_t$ describe what each position offers for matching; values $v_t$ contain what will be retrieved.
-
-For matrices $Q\in\mathbb{R}^{n_q\times d_k}$, $K\in\mathbb{R}^{n_k\times d_k}$, and $V\in\mathbb{R}^{n_k\times d_v}$,
-
-$$
-\operatorname{Attention}(Q,K,V)
-=\operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V.
-$$
-
-The matrix $QK^\top$ contains every query-key compatibility. Division by $\sqrt{d_k}$ prevents dot-product variance from growing with dimension and pushing softmax into saturated regions.
-
-If $Q$, $K$, and $V$ are all projections of the same sequence $X\in\mathbb{R}^{T\times d_{\text{model}}}$,
-
-$$
-Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V,
-$$
-
-the operation is **self-attention**. Every token can directly aggregate information from every other token in one layer.
-
-### Worked example: one query, two memories
-
-Take $d_k=2$, $q=[1,0]$, keys $k_1=[1,0]$, $k_2=[0,1]$, and values $v_1=[2,0]$, $v_2=[0,2]$. The scaled scores are
-
-$$
-\frac{[q^\top k_1,\ q^\top k_2]}{\sqrt{2}}
-= [0.707,0].
-$$
-
-Softmax turns them into attention weights $[0.670,0.330]$. Therefore,
-
-$$
-0.670v_1+0.330v_2=[1.34,0.66].
-$$
-
-The output is not a selected value; it is a weighted retrieval. Because $q$ matches $k_1$ more strongly, the result lies closer to $v_1$.
-
-<figure className="concept-figure">
-  <table className="attention-heatmap" aria-label="Example token-to-token attention weights">
-    <thead><tr><th>query ↓ / key →</th><th>The</th><th>model</th><th>reads</th><th>context</th></tr></thead>
-    <tbody>
-      <tr><th>The</th><td className="heat-4">.55</td><td className="heat-2">.20</td><td className="heat-1">.10</td><td className="heat-1">.15</td></tr>
-      <tr><th>model</th><td className="heat-1">.10</td><td className="heat-4">.50</td><td className="heat-2">.25</td><td className="heat-1">.15</td></tr>
-      <tr><th>reads</th><td className="heat-1">.08</td><td className="heat-3">.32</td><td className="heat-3">.40</td><td className="heat-2">.20</td></tr>
-      <tr><th>context</th><td className="heat-1">.05</td><td className="heat-2">.20</td><td className="heat-2">.25</td><td className="heat-4">.50</td></tr>
-    </tbody>
-  </table>
-  <figcaption><strong>Figure 6. Attention as a matrix.</strong> Each row is a query distribution over keys and sums to one. Darker cells receive more weight.</figcaption>
+<figure className="source-figure">
+  <img src="/blog/from-recurrent-memory-to-attention/seq2seq-bottleneck-lecture.png" alt="Lecture slide showing the final encoder state being passed to every decoder step" loading="lazy" />
+  <figcaption><strong>Figure 7.</strong> The fixed-context bottleneck: the final encoder representation is the decoder's only view of the source. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
 </figure>
 
-## 6. The Transformer asks whether recurrence is still necessary
+The natural question is: why should the decoder use the same summary while producing every output token?
 
-Once self-attention can mix sequence information, recurrence is no longer the only mechanism available. The Transformer encoder layer uses
+## 6. Attention as dynamic retrieval
 
-$$
-\begin{aligned}
-H' &= \operatorname{LayerNorm}\left(H+\operatorname{MultiHeadAttention}(H)\right),\\
-H^{\text{out}} &= \operatorname{LayerNorm}\left(H'+\operatorname{FFN}(H')\right).
-\end{aligned}
-$$
-
-Multi-head attention performs several learned retrievals in parallel:
+Keep all encoder states $h_1,\ldots,h_T$. At decoder step $m$, score how useful each encoder state is for the current prediction. Bahdanau-style additive attention uses
 
 $$
-\operatorname{MultiHead}(Q,K,V)
-=\operatorname{Concat}(\text{head}_1,\ldots,\text{head}_m)W_O.
+e_{m,t}
+=v_a^\top\tanh\!\left(W_ss_{m-1}+W_hh_t+b_a\right).
 $$
 
-Because self-attention alone is permutation-equivariant, position must be supplied separately, for example by adding positional encodings to token embeddings. The decoder adds causal masking so position $t$ cannot read future positions.
+Normalize these scores over source positions:
 
-<figure className="concept-figure">
-  <div className="figure-stack">
-    <div className="figure-node">Output representations</div>
-    <div className="figure-node">Add &amp; LayerNorm</div>
-    <div className="figure-node">Position-wise feed-forward network</div>
-    <div className="figure-node">Add &amp; LayerNorm</div>
-    <div className="figure-node">Multi-head self-attention</div>
-    <div className="figure-node">Token + position representations</div>
-  </div>
-  <figcaption><strong>Figure 7.</strong> A Transformer encoder block. Attention mixes positions; the feed-forward network transforms each position independently.</figcaption>
+$$
+\alpha_{m,t}
+=\frac{\exp(e_{m,t})}{\sum_{j=1}^{T}\exp(e_{m,j})},
+\qquad
+\sum_{t=1}^{T}\alpha_{m,t}=1.
+$$
+
+The decoder receives a step-specific context vector
+
+$$
+\boxed{
+c_m=\sum_{t=1}^{T}\alpha_{m,t}h_t,
+}
+$$
+
+and updates as
+
+$$
+s_m=g\!\left(s_{m-1},E(y_{m-1}),c_m\right).
+$$
+
+For example, if the attention weights are
+
+$$
+(\alpha_{m,1},\alpha_{m,2},\alpha_{m,3},\alpha_{m,4})
+=(0.03,0.08,0.13,0.76),
+$$
+
+then $c_m$ is dominated by $h_4$, while still remaining a differentiable weighted combination of all encoder states.
+
+<figure className="source-figure">
+  <img src="/blog/from-recurrent-memory-to-attention/encoder-decoder-attention-lecture.png" alt="Lecture slide showing attention weights from encoder states to a decoder context" loading="lazy" />
+  <figcaption><strong>Figure 8.</strong> At each decoder step, attention constructs a new weighted summary of the encoder states. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
 </figure>
 
-The computational path between two tokens is now $O(1)$ layers rather than $O(T)$ recurrent transitions. All positions in a layer can be computed in parallel, although full attention requires $O(T^2)$ pairwise scores.
+The matrix $[\alpha_{m,t}]$ can be visualized as a soft alignment between target and source positions.
 
-## Where we stop
+<figure className="source-figure">
+  <img src="/blog/from-recurrent-memory-to-attention/attention-map-lecture.png" alt="Heatmap of learned attention alignments between source and target words" loading="lazy" />
+  <figcaption><strong>Figure 9.</strong> Attention weights often expose a soft source-target alignment. From Prof. Prathosh A. P.'s sequence-model lecture.</figcaption>
+</figure>
 
-The historical progression is not “RNNs failed, so Transformers won.” It is more precise:
+Attention changes two things:
 
-1. RNNs introduced a learned state for variable-length sequences.
-2. LSTMs and GRUs improved gradient and memory transport.
-3. Encoder-decoder attention removed the single-context bottleneck.
-4. Self-attention turned retrieval into the sequence-mixing operation itself.
-5. The Transformer removed recurrence and supplied position separately.
+1. **No single-vector compression:** each decoder step can retrieve different source information.
+2. **A shorter gradient route:** the loss at decoder step $m$ connects directly to every encoder state through $c_m$ and $\alpha_{m,t}$, rather than only through $h_T^{\mathrm{enc}}$.
 
-<div className="takeaway">The decisive step was not inventing attention; it was recognizing that attention could carry the sequence interaction previously assigned to recurrence.</div>
+But this model is still recurrent: encoder states and decoder states are computed sequentially. Later, *Attention Is All You Need* showed that attention could become the main sequence-processing mechanism rather than an addition to recurrence. That is where this article stops.
 
 ## Quick summary
 
-- RNN: $h_t$ compresses the prefix but creates a long sequential path.
-- LSTM/GRU: gates improve memory preservation but retain recurrence.
-- RNN attention: each decoder step retrieves a weighted combination of encoder states.
-- Self-attention: tokens retrieve directly from tokens using queries, keys, and values.
-- Transformer: self-attention + position information + feed-forward blocks, without recurrence.
+- A vanilla RNN transports information and gradients through repeated state transitions.
+- BPTT exposes the long product $J_tJ_{t-1}\cdots J_{t-k+1}$.
+- Products of recurrent Jacobians can vanish or explode exponentially with distance.
+- LSTMs and GRUs add gated carry paths whose repeated derivatives can stay near identity.
+- Classical encoder-decoder attention removes the fixed-context bottleneck by retrieving a new weighted source summary at every decoder step.
+- Attention initially improved recurrent models; removing recurrence is the next story, not this one.
 
 ## References
 
-<ol className="references">
-  <li><a href="https://doi.org/10.1162/neco.1997.9.8.1735">Hochreiter and Schmidhuber, “Long Short-Term Memory,” 1997.</a></li>
-  <li><a href="https://arxiv.org/abs/1406.1078">Cho et al., “Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation,” 2014.</a></li>
-  <li><a href="https://arxiv.org/abs/1409.0473">Bahdanau, Cho, and Bengio, “Neural Machine Translation by Jointly Learning to Align and Translate,” 2014.</a></li>
-  <li><a href="https://arxiv.org/abs/1508.04025">Luong, Pham, and Manning, “Effective Approaches to Attention-based Neural Machine Translation,” 2015.</a></li>
-  <li><a href="https://arxiv.org/abs/1706.03762">Vaswani et al., “Attention Is All You Need,” 2017.</a></li>
-  <li><a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/">Olah, “Understanding LSTM Networks,” 2015.</a></li>
-  <li><a href="https://www.d2l.ai/chapter_recurrent-modern/gru.html">Zhang et al., “Gated Recurrent Units,” Dive into Deep Learning.</a></li>
-</ol>
+1. Prathosh A. P., [Lecture notes on recurrent neural networks and backpropagation through time](https://drive.google.com/file/d/1e6Lmsry-Gk6x8xfrFH6ukN-7AO09Zkc3/view).
+2. Prathosh A. P., [Lecture slides on LSTMs, sequence-to-sequence models, and attention](https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view).
+3. Sepp Hochreiter and Jürgen Schmidhuber, [Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf), 1997.
+4. Kyunghyun Cho et al., [Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078), 2014.
+5. Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio, [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473), 2015.
+6. Aston Zhang et al., [Gated Recurrent Units](https://d2l.ai/chapter_recurrent-modern/gru.html), *Dive into Deep Learning*.
+7. Ashish Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762), 2017.
 
-<div className="note"><strong>Draft status.</strong> The mathematical story is complete enough for review; personal examples, hand-drawn figures, and your own voice can be added before publication.</div>
 </BaseLayout>
