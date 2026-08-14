@@ -209,10 +209,7 @@ $$
 
 The forget gate $f_t$ controls retention, the input gate $i_t$ controls writing, and the output gate $o_t$ controls exposure.
 
-<figure className="source-figure">
-  <img src="/blog/from-recurrent-memory-to-attention/lstm-gates-lecture.png" alt="Lecture slide showing the forget, input, and output gates of an LSTM" loading="lazy" />
-  <figcaption><strong>Figure 4.</strong> The three decisions made by an LSTM cell: retain, write, and expose. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
-</figure>
+The structural change is visible before taking a derivative: $c_{t-1}$ reaches $c_t$ through an elementwise retention gate, while new information is written through an additive term. The long horizontal cell-state path emphasized in Colah's walkthrough is the path we now make mathematically precise.
 
 Now isolate the direct edge $c_{j-1}\rightarrow c_j$ in the computation graph. Holding the gates fixed along this edge,
 
@@ -239,7 +236,7 @@ This already shows the change from a vanilla RNN: the repeated factor is a learn
 To connect this result to the hidden states, isolate the computational path
 
 $$
-h_{t-k}longrightarrow c_{t-k+1}longrightarrow c_{t-k+2}longrightarrow\cdots\longrightarrow c_t\longrightarrow h_t.
+h_{t-k}\longrightarrow c_{t-k+1}\longrightarrow c_{t-k+2}\longrightarrow\cdots\longrightarrow c_t\longrightarrow h_t.
 $$
 
 Let
@@ -290,7 +287,7 @@ $$
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/gru-cell-d2l.svg" alt="GRU computation graph with reset and update gates" loading="lazy" />
-  <figcaption><strong>Figure 5.</strong> A GRU uses a reset gate for constructing the candidate and an update gate for mixing the candidate with the old state. Source: <a href="https://d2l.ai/chapter_recurrent-modern/gru.html">Dive into Deep Learning</a>.</figcaption>
+  <figcaption><strong>Figure 4.</strong> A GRU uses a reset gate for constructing the candidate and an update gate for mixing the candidate with the old state. Source: <a href="https://d2l.ai/chapter_recurrent-modern/gru.html">Dive into Deep Learning</a>.</figcaption>
 </figure>
 
 Along the direct carry edge,
@@ -323,19 +320,21 @@ $$
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/seq2seq-model-lecture.png" alt="Lecture slide showing a recurrent encoder-decoder sequence-to-sequence model" loading="lazy" />
-  <figcaption><strong>Figure 6.</strong> A recurrent encoder consumes the source sequence and a recurrent decoder generates the target sequence. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
+  <figcaption><strong>Figure 5.</strong> A recurrent encoder consumes the source sequence and a recurrent decoder generates the target sequence. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 The same vector $c$ must preserve every source detail and serve every decoder step. Gating may help information reach $h_T^{\mathrm{enc}}$, but it does not remove this fixed-vector bottleneck.
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/seq2seq-bottleneck-lecture.png" alt="Lecture slide showing the final encoder state being passed to every decoder step" loading="lazy" />
-  <figcaption><strong>Figure 7.</strong> The fixed-context bottleneck: the final encoder representation is the decoder's only view of the source. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
+  <figcaption><strong>Figure 6.</strong> The fixed-context bottleneck: the final encoder representation is the decoder's only view of the source. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 The natural question is: why should the decoder use the same summary while producing every output token?
 
 ## 6. Attention as dynamic retrieval
+
+The central differentiability trick is to avoid choosing one encoder position discretely: the decoder reads from every position, but to different extents. Softmax turns those extents into a normalized, differentiable weighting.
 
 Keep all encoder states $h_1,\ldots,h_T$. At decoder step $m$, score how useful each encoder state is for the current prediction. Bahdanau-style additive attention uses
 
@@ -378,14 +377,14 @@ then $c_m$ is dominated by $h_4$, while still remaining a differentiable weighte
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/encoder-decoder-attention-lecture.png" alt="Lecture slide showing attention weights from encoder states to a decoder context" loading="lazy" />
-  <figcaption><strong>Figure 8.</strong> At each decoder step, attention constructs a new weighted summary of the encoder states. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
+  <figcaption><strong>Figure 7.</strong> At each decoder step, attention constructs a new weighted summary of the encoder states. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 The matrix $[\alpha_{m,t}]$ can be visualized as a soft alignment between target and source positions.
 
 <figure className="source-figure">
   <img src="/blog/from-recurrent-memory-to-attention/attention-map-lecture.png" alt="Heatmap of learned attention alignments between source and target words" loading="lazy" />
-  <figcaption><strong>Figure 9.</strong> Attention weights often expose a soft source-target alignment. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
+  <figcaption><strong>Figure 8.</strong> Attention weights often expose a soft source-target alignment. Source: <a href="https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view">sequence-model lecture slides shared for this article</a>.</figcaption>
 </figure>
 
 Attention changes two things:
@@ -408,12 +407,14 @@ But this model is still recurrent: encoder states and decoder states are compute
 
 1. Stanford CS231n, [Recurrent Neural Networks](https://cs231n.github.io/rnn/#intro), course notes.
 2. Aston Zhang et al., [Recurrent Neural Networks](https://d2l.ai/chapter_recurrent-neural-networks/index.html), *Dive into Deep Learning*.
-3. [RNN and BPTT lecture notes](https://drive.google.com/file/d/1e6Lmsry-Gk6x8xfrFH6ukN-7AO09Zkc3/view), course handout shared for this article.
-4. [LSTM, sequence-to-sequence, and attention lecture slides](https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view), course handout shared for this article.
-5. Sepp Hochreiter and Jürgen Schmidhuber, [Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf), 1997.
-6. Kyunghyun Cho et al., [Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078), 2014.
-7. Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio, [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473), 2015.
-8. Aston Zhang et al., [Gated Recurrent Units](https://d2l.ai/chapter_recurrent-modern/gru.html), *Dive into Deep Learning*.
-9. Ashish Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762), 2017.
+3. Christopher Olah, [Understanding LSTM Networks](https://colah.github.io/posts/2015-08-Understanding-LSTMs/), 2015.
+4. Christopher Olah and Shan Carter, [Attention and Augmented Recurrent Neural Networks](https://distill.pub/2016/augmented-rnns/), *Distill*, 2016.
+5. [RNN and BPTT lecture notes](https://drive.google.com/file/d/1e6Lmsry-Gk6x8xfrFH6ukN-7AO09Zkc3/view), course handout shared for this article.
+6. [LSTM, sequence-to-sequence, and attention lecture slides](https://drive.google.com/file/d/1WYGYgzS2JqSlU7CePyx4WGwDHjjyzfzi/view), course handout shared for this article.
+7. Sepp Hochreiter and Jürgen Schmidhuber, [Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf), 1997.
+8. Kyunghyun Cho et al., [Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078), 2014.
+9. Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio, [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473), 2015.
+10. Aston Zhang et al., [Gated Recurrent Units](https://d2l.ai/chapter_recurrent-modern/gru.html), *Dive into Deep Learning*.
+11. Ashish Vaswani et al., [Attention Is All You Need](https://arxiv.org/abs/1706.03762), 2017.
 
 </BaseLayout>

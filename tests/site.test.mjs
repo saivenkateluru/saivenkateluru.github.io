@@ -118,11 +118,13 @@ test("sequence-model draft renders derivations and attributed figures", async ()
   assert.match(html, /aria-label="Article contents"/);
   assert.match(html, /rnn-architecture-analytics-vidhya\.webp/);
   assert.match(html, /bptt-jacobian-notes\.png/);
-  assert.match(html, /lstm-gates-lecture\.png/);
   assert.match(html, /gru-cell-d2l\.svg/);
   assert.match(html, /encoder-decoder-attention-lecture\.png/);
   assert.match(html, /cs231n\.github\.io\/rnn/);
   assert.match(html, /chapter_recurrent-neural-networks/);
+  assert.match(html, /Understanding-LSTMs/);
+  assert.match(html, /distill\.pub\/2016\/augmented-rnns/);
+  assert.doesNotMatch(html, /lstm-gates-lecture/);
   assert.doesNotMatch(html, /Prathosh/);
   assert.doesNotMatch(html, /MultiHeadAttention|Transformer encoder|query-key-value/i);
 });
