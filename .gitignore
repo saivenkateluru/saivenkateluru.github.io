@@ -2,5 +2,8 @@ node_modules/
 dist/
 .astro/
 .DS_Store
-.agents/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/write-ml-blogs-like-an-iiscian/
 LLM_from_scratch/
