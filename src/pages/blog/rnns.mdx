@@ -200,17 +200,17 @@ with $\delta_{T+1}=0$. This is ordinary reverse-mode differentiation on the unro
 
 ### Deriving $\nabla_{W_{hh}}L$ with matrix calculus
 
-The recurrent matrix is shared, so the same perturbation $dW_{hh}$ appears at every time step. Its contribution to the preactivation differential is
+The recurrent matrix is shared, so the same perturbation $dW_{hh}$ appears at every time step. Write $d_{W_{hh}}$ for the component of a differential caused by this perturbation. Then
 
 $$
-\left.da_t\right|_{dW_{hh}}=(dW_{hh})h_{t-1}.
+d_{W_{hh}}a_t=(dW_{hh})h_{t-1}.
 $$
 
 Using $\delta_t=\nabla_{a_t}L$, the corresponding loss differential is
 
 $$
 \begin{aligned}
-\left.dL\right|_{dW_{hh}}
+d_{W_{hh}}L
 &=\sum_{t=1}^{T}\delta_t^\top(dW_{hh})h_{t-1}\\
 &=\sum_{t=1}^{T}\operatorname{tr}\!\left(\delta_t^\top(dW_{hh})h_{t-1}\right)\\
 &=\sum_{t=1}^{T}\operatorname{tr}\!\left(h_{t-1}\delta_t^\top dW_{hh}\right)\\
@@ -299,11 +299,13 @@ $$
 
 The key change is additive. The old cell state is not forced through a fresh dense transformation before reaching $c_t$; it has a direct gated edge.
 
-Holding the gates fixed along that edge, define
+We will write $J^{\mathcal P}_{u\leftarrow v}$ for the contribution to the full Jacobian $\partial u/\partial v$ obtained by following only the computational path $\mathcal P$. This is path notation, not evaluation of a derivative at a point.
+
+Holding the gates fixed along the direct cell edge, define
 
 $$
 F_j
-:=\left.\frac{\partial c_j}{\partial c_{j-1}}\right|_{\text{direct cell edge}}
+:=J^{\mathrm{direct}}_{c_j\leftarrow c_{j-1}}
 =\operatorname{Diag}(f_j).
 $$
 
@@ -311,7 +313,7 @@ The direct cell-state path across $k$ steps is therefore
 
 $$
 \boxed{
-\left.\frac{\partial c_t}{\partial c_{t-k}}\right|_{\text{cell path}}
+J^{\mathrm{cell}}_{c_t\leftarrow c_{t-k}}
 =F_tF_{t-1}\cdots F_{t-k+1}.
 }
 $$
@@ -334,7 +336,7 @@ collect the derivatives through the gates at the first endpoint, and let
 
 $$
 D_t^{\mathrm{out}}
-:=\left.\frac{\partial h_t}{\partial c_t}\right|_{\text{direct output edge}}
+:=J^{\mathrm{direct}}_{h_t\leftarrow c_t}
 =\operatorname{Diag}\!\left(o_t\odot\left[1-\tanh^2(c_t)\right]\right).
 $$
 
@@ -342,7 +344,7 @@ This particular contribution to the hidden-state Jacobian is
 
 $$
 \boxed{
-\left.\frac{\partial h_t}{\partial h_{t-k}}\right|_{\text{cell path}}
+J^{\mathrm{cell}}_{h_t\leftarrow h_{t-k}}
 =D_t^{\mathrm{out}}
 \left(F_tF_{t-1}\cdots F_{t-k+2}\right)
 G_{t-k+1}.
@@ -372,7 +374,7 @@ $$
 Holding the update gate and candidate fixed along the direct carry edge,
 
 $$
-\left.\frac{\partial h_t}{\partial h_{t-1}}\right|_{\text{carry}}
+J^{\mathrm{carry}}_{h_t\leftarrow h_{t-1}}
 =\operatorname{Diag}(z_t).
 $$
 
@@ -380,7 +382,7 @@ Across several carry edges,
 
 $$
 \boxed{
-\left.\frac{\partial h_t}{\partial h_{t-k}}\right|_{\text{carry path}}
+J^{\mathrm{carry}}_{h_t\leftarrow h_{t-k}}
 =\prod_{j=t-k+1}^{t}\operatorname{Diag}(z_j).
 }
 $$

@@ -107,15 +107,17 @@ test("theme control is icon-only alongside social links", async () => {
 
 test("RNN draft renders matrix derivations and attributed figures", async () => {
   const html = await readBuilt("blog/rnns/index.html");
+  const source = await readFile(new URL("../src/pages/blog/rnns.mdx", import.meta.url), "utf8");
 
   assert.match(html, /katex/);
   assert.match(html, /Recurrent Neural Networks/);
   assert.match(html, /Backpropagation through time/);
   assert.match(html, /Frobenius inner product/);
   assert.match(html, /Deriving/);
-  assert.match(html, /cell path/);
+  assert.match(html, /path notation/);
   assert.match(html, /do not mathematically guarantee/);
   assert.doesNotMatch(html, /katex-error/);
+  assert.doesNotMatch(source, /\\right\|_/);
   assert.doesNotMatch(html, /,ldots/);
   assert.match(html, /aria-label="Article contents"/);
   assert.match(html, /rnn-architecture-analytics-vidhya\.webp/);
