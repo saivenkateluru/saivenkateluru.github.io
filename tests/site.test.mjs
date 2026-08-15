@@ -6,7 +6,7 @@ const routes = [
   "index.html",
   "academics/index.html",
   "blog/index.html",
-  "blog/attention-is-all-you-need/index.html",
+  "blog/rnns/index.html",
   "projects/index.html",
   "publications/index.html",
 ];
@@ -105,26 +105,26 @@ test("theme control is icon-only alongside social links", async () => {
   assert.doesNotMatch(html, />go (?:light|dark)<\/button>/);
 });
 
-test("sequence-model draft renders derivations and attributed figures", async () => {
-  const html = await readBuilt("blog/attention-is-all-you-need/index.html");
+test("RNN draft renders matrix derivations and attributed figures", async () => {
+  const html = await readBuilt("blog/rnns/index.html");
 
   assert.match(html, /katex/);
-  assert.match(html, /From Recurrent Memory to Attention/);
+  assert.match(html, /Recurrent Neural Networks/);
   assert.match(html, /Backpropagation through time/);
+  assert.match(html, /Frobenius inner product/);
+  assert.match(html, /Deriving/);
   assert.match(html, /cell path/);
-  assert.match(html, /Vaswani et al\./);
-  assert.match(html, /Attention Is All You Need/);
+  assert.match(html, /do not mathematically guarantee/);
+  assert.doesNotMatch(html, /katex-error/);
   assert.doesNotMatch(html, /,ldots/);
   assert.match(html, /aria-label="Article contents"/);
   assert.match(html, /rnn-architecture-analytics-vidhya\.webp/);
-  assert.match(html, /bptt-jacobian-notes\.png/);
   assert.match(html, /gru-cell-d2l\.svg/);
-  assert.match(html, /encoder-decoder-attention-lecture\.png/);
   assert.match(html, /cs231n\.github\.io\/rnn/);
   assert.match(html, /chapter_recurrent-neural-networks/);
   assert.match(html, /Understanding-LSTMs/);
-  assert.match(html, /distill\.pub\/2016\/augmented-rnns/);
-  assert.doesNotMatch(html, /lstm-gates-lecture/);
+  assert.doesNotMatch(html, /Bahdanau|Vaswani|Attention Is All You Need/);
+  assert.doesNotMatch(html, /encoder-decoder-attention-lecture/);
   assert.doesNotMatch(html, /Prathosh/);
   assert.doesNotMatch(html, /MultiHeadAttention|Transformer encoder|query-key-value/i);
 });
@@ -134,19 +134,19 @@ test("blog groups posts under the ML Understood series", async () => {
 
   assert.match(html, /<details class="blog-series">/);
   assert.match(html, /<summary>[\s\S]*ML Understood/);
-  assert.match(html, /From Recurrent Memory to Attention/);
+  assert.match(html, /Recurrent Neural Networks/);
   assert.doesNotMatch(html, /Machine learning can be understood/);
 });
 
 test("published pages include discovery metadata", async () => {
-  const html = await readBuilt("blog/attention-is-all-you-need/index.html");
+  const html = await readBuilt("blog/rnns/index.html");
   const rss = await readBuilt("rss.xml");
 
-  assert.match(html, /rel="canonical" href="https:\/\/saivenkateluru\.github\.io\/blog\/attention-is-all-you-need\/"/);
+  assert.match(html, /rel="canonical" href="https:\/\/saivenkateluru\.github\.io\/blog\/rnns\/"/);
   assert.match(html, /rel="icon" href="\/favicon\.svg"/);
   assert.match(html, /rel="alternate" type="application\/rss\+xml"/);
   assert.match(html, /property="og:title"/);
   assert.match(html, /name="twitter:card" content="summary"/);
-  assert.match(rss, /From Recurrent Memory to Attention/);
+  assert.match(rss, /Recurrent Neural Networks/);
   await readBuilt("favicon.svg");
 });

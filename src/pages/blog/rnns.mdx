@@ -1,0 +1,428 @@
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+<BaseLayout
+  title="Recurrent Neural Networks"
+  description="Why recurrent neural networks model sequences, how backpropagation through time works in matrix calculus, why gradients vanish or explode, and how LSTMs and GRUs improve gradient transport."
+  article
+>
+  <header className="article-header">
+    <p className="eyebrow">ML Understood · Sequence Models</p>
+    <h1>Recurrent Neural Networks</h1>
+    <p className="lede">Why sequences need shared memory, how backpropagation through time produces long Jacobian products, and how LSTMs and GRUs build better—but not infallible—paths for gradient transport.</p>
+    <div className="article-meta">
+      <span className="meta">Eluru Sai Venkat</span>
+      <span className="meta">August 2026</span>
+      <span className="meta">~20 min</span>
+    </div>
+    <div className="tags">
+      <span className="tag">RNN</span><span className="tag">BPTT</span><span className="tag">LSTM</span><span className="tag">GRU</span>
+    </div>
+    <a className="back-link" href="/blog/" aria-label="Back to blog">←</a>
+  </header>
+
+  <nav className="article-toc" aria-label="Article contents">
+    <strong>In this article</strong>
+    <ol>
+      <li><a href="#1-why-do-we-need-rnns">Why do we need RNNs?</a></li>
+      <li><a href="#2-a-recurrent-model">A recurrent model</a></li>
+      <li><a href="#3-backpropagation-through-time">Backpropagation through time</a></li>
+      <li><a href="#4-why-gradients-vanish-or-explode">Vanishing and exploding gradients</a></li>
+      <li><a href="#5-lstm-an-additive-memory-path">LSTM</a></li>
+      <li><a href="#6-gru-a-gated-carry-path">GRU</a></li>
+      <li><a href="#7-what-gating-does-and-does-not-solve">What gating does—and does not—solve</a></li>
+    </ol>
+  </nav>
+
+## 1. Why do we need RNNs?
+
+Suppose the input is a sequence
+
+$$
+x_{1:T}=(x_1,x_2,\ldots,x_T),
+\qquad x_t\in\mathbb{R}^{d_x}.
+$$
+
+The meaning of the current element often depends on what came before it. The word “bank” in “river bank” and “bank account” is the same token, but its useful representation depends on the preceding context. A frame in a video, a sample in a waveform, or a measurement in a time series has the same property.
+
+A naive fixed-window multilayer perceptron can consume a window such as $[x_{t-k},\ldots,x_t]$, but then:
+
+1. the input size is tied to the chosen window length $k$;
+2. dependencies beyond that window are unavailable; and
+3. using a different parameter set at each position would not generalize naturally to unseen sequence lengths.
+
+An RNN instead carries a state $h_t$ from one position to the next and reuses the same transition at every time step. This gives two useful inductive biases:
+
+- **variable-length computation:** the same cell can be applied for any $T$;
+- **time-shared parameters:** the rule for updating memory does not depend on the absolute position.
+
+The central question is therefore not merely “what is $x_t$?” but
+
+$$
+\text{what should the model remember from }x_{1:t}\text{ after seeing }x_t?
+$$
+
+## 2. A recurrent model
+
+Let $h_t\in\mathbb{R}^{d_h}$ be the hidden state. A vanilla RNN is
+
+$$
+\begin{aligned}
+a_t &= W_{hh}h_{t-1}+W_{xh}x_t+b_h,\\
+h_t &= \phi(a_t),\\
+o_t &= W_{hy}h_t+b_y,\\
+p_t &= \operatorname{softmax}(o_t),
+\end{aligned}
+$$
+
+where
+
+$$
+W_{hh}\in\mathbb{R}^{d_h\times d_h},
+\qquad
+W_{xh}\in\mathbb{R}^{d_h\times d_x}.
+$$
+
+Recursively, $h_t$ is a learned summary of the prefix $x_{1:t}$. The recurrence is usually drawn as a loop, but unrolling it reveals a depth-$T$ computation graph whose copies share parameters.
+
+<figure className="source-figure">
+  <img src="/blog/rnns/rnn-architecture-analytics-vidhya.webp" alt="A recurrent neural network shown as one recurrent cell and as the same cell unrolled through three time steps" loading="lazy" />
+  <figcaption><strong>Figure 1.</strong> A recurrent cell and its time-unrolled computation graph. Every blue cell uses the same parameters. Source: <a href="https://cdn.analyticsvidhya.com/wp-content/uploads/2024/09/image-80.webp">Analytics Vidhya</a>.</figcaption>
+</figure>
+
+For token-level supervision, let
+
+$$
+L=\sum_{t=1}^{T}\ell_t,
+\qquad
+\ell_t=-\log p_t[y_t].
+$$
+
+We use a loss at every time step to make the derivation concrete. In a many-to-one task, only the final state may receive a direct loss; BPTT is unchanged, except that $\nabla_{h_t}\ell_t=0$ at the unsupervised steps.
+
+Two limitations are already visible:
+
+1. **Sequential computation:** $h_t$ cannot be computed before $h_{t-1}$.
+2. **Repeated transport:** information from time $t-k$ must cross $k$ recurrent transitions to affect time $t$.
+
+The second limitation becomes precise when we differentiate the unrolled graph.
+
+## 3. Backpropagation through time
+
+We use column-vector gradients. The Frobenius inner product between equal-shaped matrices is
+
+$$
+\langle A,B\rangle_F:=\operatorname{tr}(A^\top B).
+$$
+
+For a scalar loss $L$ and a matrix parameter $W$, define the matrix gradient through
+
+$$
+dL
+=\left\langle \nabla_WL,dW\right\rangle_F
+=\operatorname{tr}\!\left((\nabla_WL)^\top dW\right).
+$$
+
+This identity lets us read a matrix gradient directly from the differential of the loss.
+
+### The hidden-state Jacobian
+
+For fixed parameters and input,
+
+$$
+da_t=W_{hh}\,dh_{t-1}.
+$$
+
+Because $\phi$ is applied elementwise,
+
+$$
+dh_t=D_t\,da_t,
+\qquad
+D_t=\operatorname{Diag}\!\left(\phi'(a_t)\right).
+$$
+
+Therefore
+
+$$
+\boxed{
+J_t
+:=\frac{\partial h_t}{\partial h_{t-1}}
+=D_tW_{hh}.
+}
+$$
+
+The Jacobian $J_t$ is the local linear map that transports a perturbation in $h_{t-1}$ to a perturbation in $h_t$.
+
+Repeated application of the chain rule gives
+
+$$
+\boxed{
+\frac{\partial h_t}{\partial h_{t-k}}
+=J_tJ_{t-1}\cdots J_{t-k+1}.
+}
+$$
+
+Consequently, a loss at time $t$ sends a column gradient backward as
+
+$$
+\nabla_{h_{t-k}}\ell_t
+=\left(J_tJ_{t-1}\cdots J_{t-k+1}\right)^\top
+\nabla_{h_t}\ell_t.
+$$
+
+<details className="doubt">
+  <summary>Why does the transpose appear during backpropagation?</summary>
+  <p>The forward differential is $dh_t=J_tdh_{t-1}$. Substituting this into $d\ell=(\nabla_{h_t}\ell)^\top dh_t$ and matching the coefficient of $dh_{t-1}$ gives $\nabla_{h_{t-1}}\ell=J_t^\top\nabla_{h_t}\ell$.</p>
+</details>
+
+### The backward recursion
+
+Let
+
+$$
+r_t:=\nabla_{h_t}\ell_t,
+\qquad
+g_t:=\nabla_{h_t}L,
+\qquad
+\delta_t:=\nabla_{a_t}L=D_tg_t.
+$$
+
+The state $h_t$ influences both the current loss $\ell_t$ and the future through $a_{t+1}$. Hence
+
+$$
+\boxed{
+g_t=r_t+W_{hh}^\top\delta_{t+1},
+\qquad
+\delta_t=D_tg_t,
+}
+$$
+
+with $\delta_{T+1}=0$. This is ordinary reverse-mode differentiation on the unrolled graph.
+
+### Deriving $\nabla_{W_{hh}}L$ with matrix calculus
+
+The recurrent matrix is shared, so the same perturbation $dW_{hh}$ appears at every time step. Its contribution to the preactivation differential is
+
+$$
+\left.da_t\right|_{dW_{hh}}=(dW_{hh})h_{t-1}.
+$$
+
+Using $\delta_t=\nabla_{a_t}L$, the corresponding loss differential is
+
+$$
+\begin{aligned}
+\left.dL\right|_{dW_{hh}}
+&=\sum_{t=1}^{T}\delta_t^\top(dW_{hh})h_{t-1}\\
+&=\sum_{t=1}^{T}\operatorname{tr}\!\left(\delta_t^\top(dW_{hh})h_{t-1}\right)\\
+&=\sum_{t=1}^{T}\operatorname{tr}\!\left(h_{t-1}\delta_t^\top dW_{hh}\right)\\
+&=\operatorname{tr}\!\left[
+\left(\sum_{t=1}^{T}\delta_th_{t-1}^\top\right)^\top dW_{hh}
+\right].
+\end{aligned}
+$$
+
+Comparing this with $dL=\operatorname{tr}((\nabla_{W_{hh}}L)^\top dW_{hh})$ gives
+
+$$
+\boxed{
+\nabla_{W_{hh}}L
+=\sum_{t=1}^{T}\delta_th_{t-1}^\top.
+}
+$$
+
+Each term is an outer product:
+
+- $\delta_t$ measures how the total loss changes with the preactivation produced at time $t$;
+- $h_{t-1}$ is the vector multiplied by $W_{hh}$ at that use of the parameter.
+
+BPTT sums these local contributions because one shared matrix appears in every unrolled copy.
+
+<details className="doubt">
+  <summary>We know $h_t$, so why not update $W_{hh}$ using $h_t$ itself?</summary>
+  <p>$h_t$ is a state, not a loss derivative. An update needs both the incoming activation $h_{t-1}$ and the loss sensitivity $\delta_t$. Their outer product has the same shape as $W_{hh}$ and identifies which matrix entries should change. The value $h_t$ alone contains neither this credit-assignment information nor the required matrix structure.</p>
+</details>
+
+This entire procedure—unroll the shared recurrence and apply reverse-mode differentiation—is **backpropagation through time (BPTT)**.
+
+## 4. Why gradients vanish or explode
+
+The long-range gradient contains a product of Jacobians. Taking spectral norms,
+
+$$
+\begin{aligned}
+\left\|\nabla_{h_{t-k}}\ell_t\right\|_2
+&\le
+\left(\prod_{j=t-k+1}^{t}\|J_j\|_2\right)
+\left\|\nabla_{h_t}\ell_t\right\|_2\\
+&\le
+\left(\prod_{j=t-k+1}^{t}\|D_j\|_2\|W_{hh}\|_2\right)
+\left\|\nabla_{h_t}\ell_t\right\|_2.
+\end{aligned}
+$$
+
+If $\|J_j\|_2\le\gamma<1$ throughout the interval, then
+
+$$
+\left\|\nabla_{h_{t-k}}\ell_t\right\|_2
+\le
+\gamma^k\left\|\nabla_{h_t}\ell_t\right\|_2,
+$$
+
+so the signal decays exponentially with the temporal distance $k$. For $\phi=\tanh$, saturation makes entries of $D_j$ approach zero, which strengthens this contraction.
+
+If the Jacobian product repeatedly expands the transported vector instead, its norm can grow exponentially. The resulting parameter gradients become unstable, and a single optimizer step may move the parameters far outside a useful region.
+
+For scale, $0.9^{50}\approx0.0052$, whereas $1.1^{50}\approx117$. Repeated mild contraction or expansion can therefore become severe over a long sequence. The contraction bound above gives a sufficient condition for vanishing. Large individual spectral norms do **not** similarly prove explosion: the transported gradient must also align with expanding singular directions across the changing Jacobians.
+
+<details className="doubt">
+  <summary>Does $\|J_j\|_2\gt1$ at every step guarantee an exploding gradient?</summary>
+  <p>No. The spectral norm is the largest possible one-step expansion. The actual gradient must also remain aligned with expanding singular directions across many changing Jacobians. The norm product is a useful bound, not an exact prediction.</p>
+</details>
+
+Gradient clipping can limit an exploding update, but it cannot reconstruct information after a gradient has vanished. A more structural remedy is to provide a path whose repeated derivative can remain close to identity.
+
+<div className="takeaway">The difficulty is not recurrence alone. It is forcing long-range credit through a long product of dense, nonlinear transition Jacobians.</div>
+
+## 5. LSTM: an additive memory path
+
+An LSTM introduces a cell state $c_t$ and uses gates to decide what to retain, write, and expose:
+
+$$
+\begin{aligned}
+f_t &= \sigma(W_fx_t+U_fh_{t-1}+b_f),\\
+i_t &= \sigma(W_ix_t+U_ih_{t-1}+b_i),\\
+\widetilde c_t &= \tanh(W_cx_t+U_ch_{t-1}+b_c),\\
+c_t &= f_t\odot c_{t-1}+i_t\odot\widetilde c_t,\\
+o_t &= \sigma(W_ox_t+U_oh_{t-1}+b_o),\\
+h_t &= o_t\odot\tanh(c_t).
+\end{aligned}
+$$
+
+The key change is additive. The old cell state is not forced through a fresh dense transformation before reaching $c_t$; it has a direct gated edge.
+
+Holding the gates fixed along that edge, define
+
+$$
+F_j
+:=\left.\frac{\partial c_j}{\partial c_{j-1}}\right|_{\text{direct cell edge}}
+=\operatorname{Diag}(f_j).
+$$
+
+The direct cell-state path across $k$ steps is therefore
+
+$$
+\boxed{
+\left.\frac{\partial c_t}{\partial c_{t-k}}\right|_{\text{cell path}}
+=F_tF_{t-1}\cdots F_{t-k+1}.
+}
+$$
+
+If the model learns $f_j\approx\mathbf{1}$ over an interval, then $F_j\approx I$ and this product remains close to identity. The model has learned to copy its memory rather than repeatedly rewrite it.
+
+To connect hidden states, isolate the path
+
+$$
+h_{t-k}\longrightarrow c_{t-k+1}\longrightarrow\cdots\longrightarrow c_t\longrightarrow h_t.
+$$
+
+Let
+
+$$
+G_{t-k+1}:=\frac{\partial c_{t-k+1}}{\partial h_{t-k}}
+$$
+
+collect the derivatives through the gates at the first endpoint, and let
+
+$$
+D_t^{\mathrm{out}}
+:=\left.\frac{\partial h_t}{\partial c_t}\right|_{\text{direct output edge}}
+=\operatorname{Diag}\!\left(o_t\odot\left[1-\tanh^2(c_t)\right]\right).
+$$
+
+This particular contribution to the hidden-state Jacobian is
+
+$$
+\boxed{
+\left.\frac{\partial h_t}{\partial h_{t-k}}\right|_{\text{cell path}}
+=D_t^{\mathrm{out}}
+\left(F_tF_{t-1}\cdots F_{t-k+2}\right)
+G_{t-k+1}.
+}
+$$
+
+The important difference is that the long middle product can be close to identity. The endpoint factors may still attenuate the gradient, but they occur once rather than once per time step.
+
+## 6. GRU: a gated carry path
+
+A GRU applies the same additive idea without maintaining a separate cell state:
+
+$$
+\begin{aligned}
+z_t &= \sigma(W_zx_t+U_zh_{t-1}+b_z),\\
+r_t &= \sigma(W_rx_t+U_rh_{t-1}+b_r),\\
+\widetilde h_t &= \tanh\!\left(W_hx_t+U_h(r_t\odot h_{t-1})+b_h\right),\\
+h_t &= z_t\odot h_{t-1}+(1-z_t)\odot\widetilde h_t.
+\end{aligned}
+$$
+
+<figure className="source-figure">
+  <img src="/blog/rnns/gru-cell-d2l.svg" alt="GRU computation graph showing the reset gate, update gate, candidate state, and additive carry path" loading="lazy" />
+  <figcaption><strong>Figure 2.</strong> A GRU uses a reset gate when constructing the candidate and an update gate when mixing the candidate with the previous state. Source: <a href="https://d2l.ai/chapter_recurrent-modern/gru.html">Dive into Deep Learning</a>.</figcaption>
+</figure>
+
+Holding the update gate and candidate fixed along the direct carry edge,
+
+$$
+\left.\frac{\partial h_t}{\partial h_{t-1}}\right|_{\text{carry}}
+=\operatorname{Diag}(z_t).
+$$
+
+Across several carry edges,
+
+$$
+\boxed{
+\left.\frac{\partial h_t}{\partial h_{t-k}}\right|_{\text{carry path}}
+=\prod_{j=t-k+1}^{t}\operatorname{Diag}(z_j).
+}
+$$
+
+When $z_j\approx1$, the GRU copies the old state and the direct derivative remains near identity. The reset gate $r_t$ separately controls how much of the previous state is used to construct the candidate $\widetilde h_t$.
+
+## 7. What gating does—and does not—solve
+
+LSTMs and GRUs give the network a **learnable route** for preserving information and gradients. They do not mathematically guarantee that gradients can never vanish or explode.
+
+For an LSTM:
+
+- if many forget gates satisfy $f_j\lt1$, the product $F_t\cdots F_{t-k+1}$ still contracts;
+- saturated sigmoid gates have small derivatives, so learning the gates themselves can be slow;
+- the output factor $1-\tanh^2(c_t)$ can be small; and
+- the full Jacobian contains additional recurrent paths that may contract or expand.
+
+The same qualification applies to a GRU. Its direct carry path is protected only when the learned update gates keep $z_j$ near one, while the full derivative also includes the dependence of $z_t$, $r_t$, and $\widetilde h_t$ on $h_{t-1}$.
+
+Gated RNNs also remain sequential: the forward state $h_t$ requires $h_{t-1}$, and BPTT reverses through the same dependency chain.
+
+Attention provides a different way to connect distant sequence positions. That deserves a separate article; this one stops with recurrent models.
+
+## Quick summary
+
+- RNNs process variable-length sequences by repeatedly applying one shared state transition.
+- BPTT is ordinary reverse-mode differentiation on the unrolled recurrent computation graph.
+- Matrix calculus gives $\nabla_{W_{hh}}L=\sum_{t=1}^{T}\delta_th_{t-1}^\top$: loss sensitivity times incoming activation, summed over every shared use.
+- Long-range gradients contain products of recurrent Jacobians, which may contract or expand exponentially.
+- LSTMs create an additive cell-state path; GRUs create an additive carry path.
+- These gated paths can improve gradient transport, but they do not guarantee that vanishing or exploding gradients are impossible.
+- RNNs, LSTMs, and GRUs still perform sequence computation recurrently.
+
+## References
+
+1. Stanford CS231n, [Recurrent Neural Networks](https://cs231n.github.io/rnn/#intro), course notes.
+2. Aston Zhang et al., [Recurrent Neural Networks](https://d2l.ai/chapter_recurrent-neural-networks/index.html), *Dive into Deep Learning*.
+3. Christopher Olah, [Understanding LSTM Networks](https://colah.github.io/posts/2015-08-Understanding-LSTMs/), 2015.
+4. Yoshua Bengio, Patrice Simard, and Paolo Frasconi, [Learning Long-Term Dependencies with Gradient Descent is Difficult](https://doi.org/10.1109/72.279181), 1994.
+5. Razvan Pascanu, Tomas Mikolov, and Yoshua Bengio, [On the Difficulty of Training Recurrent Neural Networks](https://arxiv.org/abs/1211.5063), 2013.
+6. Sepp Hochreiter and Jürgen Schmidhuber, [Long Short-Term Memory](https://www.bioinf.jku.at/publications/older/2604.pdf), 1997.
+7. Kyunghyun Cho et al., [Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation](https://arxiv.org/abs/1406.1078), 2014.
+8. Aston Zhang et al., [Gated Recurrent Units](https://d2l.ai/chapter_recurrent-modern/gru.html), *Dive into Deep Learning*.
+
+</BaseLayout>

@@ -6,11 +6,11 @@
     <description>Mathematical notes on machine learning and artificial intelligence.</description>
     <language>en</language>
     <item>
-      <title>From Recurrent Memory to Attention</title>
-      <link>https://saivenkateluru.github.io/blog/attention-is-all-you-need/</link>
-      <guid>https://saivenkateluru.github.io/blog/attention-is-all-you-need/</guid>
+      <title>Recurrent Neural Networks</title>
+      <link>https://saivenkateluru.github.io/blog/rnns/</link>
+      <guid>https://saivenkateluru.github.io/blog/rnns/</guid>
       <pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate>
-      <description>RNN forward dynamics, BPTT Jacobians, gated gradient transport, and classical encoder-decoder attention.</description>
+      <description>Why RNNs model sequences, how BPTT works in matrix calculus, why recurrent gradients fail, and how LSTMs and GRUs improve gradient transport.</description>
     </item>
   </channel>
 </rss>
