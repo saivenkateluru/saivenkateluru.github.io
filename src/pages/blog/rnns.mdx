@@ -121,15 +121,13 @@ CNN weight sharing has the same interpretation across spatial locations: one con
 
 </details>
 
-For token-level supervision, let
+To isolate temporal credit assignment, place a single loss on the final hidden state:
 
 $$
-L=\sum_{t=1}^{T}\ell_t,
-\qquad
-\ell_t=-\log p_t[y_t].
+L=\ell(h_T).
 $$
 
-We use a loss at every time step to make the derivation concrete. In a many-to-one task, only the final state may receive a direct loss; BPTT is unchanged, except that $\nabla_{h_t}\ell_t=0$ at the unsupervised steps.
+Every earlier hidden state can affect $L$ only through the recurrent chain leading to $h_T$. This makes the effect of temporal distance on learning explicit.
 
 Two limitations are already visible:
 
@@ -170,17 +168,17 @@ $$
 }
 $$
 
-Consequently, a loss at time $t$ sends a column gradient backward as
+Taking $t=T$ and writing the earlier time as $s$, the final loss sends a column gradient backward as
 
 $$
-\nabla_{h_{t-k}}\ell_t
-=\left[(D_tW_{hh})(D_{t-1}W_{hh})\cdots(D_{t-k+1}W_{hh})\right]^\top
-\nabla_{h_t}\ell_t.
+\nabla_{h_s}L
+=\left[(D_TW_{hh})(D_{T-1}W_{hh})\cdots(D_{s+1}W_{hh})\right]^\top
+\nabla_{h_T}L.
 $$
 
 <details className="doubt">
   <summary>Why does the transpose appear during backpropagation?</summary>
-  <p>The forward differential is $dh_t=(D_tW_{hh})dh_{t-1}$. Substituting this into $d\ell=(\nabla_{h_t}\ell)^\top dh_t$ and matching the coefficient of $dh_{t-1}$ gives $\nabla_{h_{t-1}}\ell=(D_tW_{hh})^\top\nabla_{h_t}\ell$.</p>
+  <p>The forward differential is $dh_t=(D_tW_{hh})dh_{t-1}$. Substituting this into $dL=(\nabla_{h_t}L)^\top dh_t$ and matching the coefficient of $dh_{t-1}$ gives $\nabla_{h_{t-1}}L=(D_tW_{hh})^\top\nabla_{h_t}L$.</p>
 </details>
 
 ### The backward recursion
@@ -188,32 +186,34 @@ $$
 Let
 
 $$
-r_t:=\nabla_{h_t}\ell_t,
-\qquad
 g_t:=\nabla_{h_t}L,
 \qquad
 \delta_t:=\nabla_{a_t}L=D_tg_t.
 $$
 
-The state $h_t$ influences both the current loss $\ell_t$ and the future through $a_{t+1}$. Hence
+The backward pass starts at the final loss and follows the recurrent chain:
 
 $$
 \boxed{
-g_t=r_t+W_{hh}^\top\delta_{t+1},
+g_T=\nabla_{h_T}L,
 \qquad
-\delta_t=D_tg_t,
+g_t=W_{hh}^\top\delta_{t+1}\ \text{for }t<T,
+\qquad
+\delta_t=D_tg_t.
 }
 $$
 
-with $\delta_{T+1}=0$. This is ordinary reverse-mode differentiation on the unrolled graph.
+This is ordinary reverse-mode differentiation on the unrolled graph.
 
 ### Deriving $\nabla_{W_{hh}}L$ with matrix calculus
 
-The recurrent matrix is shared, so the same perturbation $dW_{hh}$ appears at every time step. Write $d_{W_{hh}}$ for the component of a differential caused by this perturbation. Then
+The recurrent matrix is shared, so the same perturbation $dW_{hh}$ appears at every time step. At time $t$, its direct local effect on the preactivation, holding $h_{t-1}$ fixed, is
 
 $$
-d_{W_{hh}}a_t=(dW_{hh})h_{t-1}.
+d_{W_{hh}}^{\mathrm{local}}a_t=(dW_{hh})h_{t-1}.
 $$
+
+The indirect effect through the dependence of $h_{t-1}$ on $W_{hh}$ is already carried backward by $\delta_t$ in BPTT.
 
 <details className="doubt">
   <summary>Matrix-gradient convention: Frobenius inner product</summary>
@@ -275,103 +275,56 @@ This entire procedure—unroll the shared recurrence and apply reverse-mode diff
 
 ## 4. Why gradients vanish or explode
 
-The long-range gradient contains a product of Jacobians. Taking spectral norms,
+For an earlier time $s<T$, the hidden-state gradient derived above matters because the use of $W_{hh}$ at time $s$ contributes
+
+$$
+\boxed{
+G_s:=\delta_sh_{s-1}^\top
+=D_s\nabla_{h_s}L\,h_{s-1}^\top
+}
+$$
+
+to the parameter gradient. The shared matrix receives the sum of these contributions:
+
+$$
+\nabla_{W_{hh}}L=\sum_{s=1}^{T}G_s.
+$$
+
+Since $G_s$ is an outer product,
 
 $$
 \begin{aligned}
-\left\|\nabla_{h_{t-k}}\ell_t\right\|_2
+\|G_s\|_F
+&=\|\delta_s\|_2\|h_{s-1}\|_2\\
 &\le
-\left(\prod_{j=t-k+1}^{t}\|D_jW_{hh}\|_2\right)
-\left\|\nabla_{h_t}\ell_t\right\|_2\\
-&\le
-\left(\prod_{j=t-k+1}^{t}\|D_j\|_2\|W_{hh}\|_2\right)
-\left\|\nabla_{h_t}\ell_t\right\|_2.
+\|h_{s-1}\|_2\|D_s\|_2
+\left(\prod_{j=s+1}^{T}\|D_jW_{hh}\|_2\right)
+\|\nabla_{h_T}L\|_2.
 \end{aligned}
 $$
 
-If $\|D_jW_{hh}\|_2\le\gamma<1$ throughout the interval, then
-
-$$
-\left\|\nabla_{h_{t-k}}\ell_t\right\|_2
-\le
-\gamma^k\left\|\nabla_{h_t}\ell_t\right\|_2,
-$$
-
-so the signal decays exponentially with the temporal distance $k$. For $\phi=\tanh$, saturation makes entries of $D_j$ approach zero, which strengthens this contraction.
-
-### From hidden-state gradients to parameter updates
-
-The optimizer does not update hidden states; it updates parameters. We therefore need one more step connecting the transported gradient above to $\nabla_{W_{hh}}L$.
-
-Consider the contribution of a loss $\ell_t$ to an earlier use of $W_{hh}$ at time $s\le t$. Define
-
-$$
-\delta_s^{(t)}:=\nabla_{a_s}\ell_t.
-$$
-
-Since the error must travel from $h_t$ back to $h_s$ and then through $h_s=\phi(a_s)$,
-
-$$
-\delta_s^{(t)}
-=D_s
-\left[(D_tW_{hh})(D_{t-1}W_{hh})\cdots(D_{s+1}W_{hh})\right]^\top
-\nabla_{h_t}\ell_t,
-$$
-
-where the product is the identity when $s=t$. Because $a_s=W_{hh}h_{s-1}+\cdots$, the time-$s$ use of the shared matrix contributes the following pathwise term—not the full derivative by itself:
+This is the direct connection to the weight update. If $\|D_jW_{hh}\|_2\le\gamma<1$, then
 
 $$
 \boxed{
-G_s^{(t)}
-:=\nabla_{W_{hh}}^{(s)}\ell_t
-=\delta_s^{(t)}h_{s-1}^\top.
-}
-$$
-
-The total preactivation gradient at time $s$ is
-
-$$
-\delta_s=\nabla_{a_s}L=\sum_{t=s}^{T}\delta_s^{(t)}.
-$$
-
-Summing over every source loss and every earlier use of the shared matrix therefore recovers the full parameter gradient:
-
-$$
-\nabla_{W_{hh}}L
-=\sum_{t=1}^{T}\sum_{s=1}^{t}G_s^{(t)}
-=\sum_{s=1}^{T}\left(\sum_{t=s}^{T}\delta_s^{(t)}\right)h_{s-1}^\top.
-$$
-
-For each rank-one contribution,
-
-$$
-\boxed{
-\left\|G_s^{(t)}\right\|_F
-=\left\|\delta_s^{(t)}\right\|_2
-\left\|h_{s-1}\right\|_2.
-}
-$$
-
-The transported error also obeys
-
-$$
-\left\|\delta_s^{(t)}\right\|_2
+\|G_s\|_F
 \le
-\|D_s\|_2
-\left\|(D_tW_{hh})\cdots(D_{s+1}W_{hh})\right\|_2
-\left\|\nabla_{h_t}\ell_t\right\|_2.
+\|h_{s-1}\|_2\|D_s\|_2
+\gamma^{T-s}
+\|\nabla_{h_T}L\|_2.
+}
 $$
 
-This is the direct connection to learning. If the recurrent Jacobian product contracts with the gap $t-s$ while the endpoint factors $\|D_s\|_2$ and $\|\nabla_{h_t}\ell_t\|_2$ remain bounded, then $\delta_s^{(t)}$ becomes tiny. The late loss consequently produces almost no update to $W_{hh}$ through its use at the early time $s$. The model may still receive healthy gradients from nearby losses; what disappears is the **long-range credit signal** telling it how an early transition affected a much later error.
+The contribution from an early use of $W_{hh}$ therefore decays exponentially with its distance from the final loss. The optimizer receives almost no signal about how that early transition should change to reduce the final error. This loss of long-range credit—not merely a small derivative with respect to an intermediate hidden state—is why vanishing gradients obstruct learning. For $\phi=\tanh$, saturation makes entries of $D_j$ approach zero and strengthens the contraction.
 
-If the product repeatedly expands the transported error instead, some $G_s^{(t)}$ terms can become enormous and may dominate the sum. Pathwise terms can cancel, so one enormous term does not guarantee that the final summed gradient is enormous; nevertheless, learning becomes highly sensitive to such unstable cancellation. Under gradient descent,
+If the Jacobian product expands instead, some $G_s$ terms can become enormous. Under gradient descent,
 
 $$
 W_{hh}^{\text{new}}
 =W_{hh}-\eta\nabla_{W_{hh}}L,
 $$
 
-so an exploding parameter gradient produces an excessively large update, causing oscillation, overflow, or departure from a useful region of parameter space.
+so an exploding parameter gradient produces an excessively large update, causing oscillation, overflow, or departure from a useful region of parameter space. Different $G_s$ terms can cancel, so expansion along one path does not guarantee that the final sum explodes; it makes the update unstable and highly sensitive.
 
 For scale, $0.9^{50}\approx0.0052$, whereas $1.1^{50}\approx117$. Repeated mild contraction or expansion can therefore become severe over a long sequence. The contraction bound above gives a sufficient condition for vanishing. Large individual spectral norms do **not** similarly prove explosion: the transported gradient must also align with expanding singular directions across the changing Jacobians.
 
