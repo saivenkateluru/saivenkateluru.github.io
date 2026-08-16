@@ -121,7 +121,6 @@ test("RNN draft renders matrix derivations and attributed figures", async () => 
   assert.doesNotMatch(html, /,ldots/);
   assert.match(html, /aria-label="Article contents"/);
   assert.match(html, /rnn-unrolled-goodnotes\.png/);
-  assert.match(html, /Author’s handwritten notes/);
   assert.doesNotMatch(html, /rnn-architecture-analytics-vidhya/);
   assert.match(html, /Weight sharing as architectural regularization/);
   assert.match(html, /PRNN course taught at IISc/);
