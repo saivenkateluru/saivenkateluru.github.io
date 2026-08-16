@@ -114,7 +114,7 @@ $$
 
 is a restricted subset of the untied class. This is **architectural regularization**: instead of adding a soft penalty such as $\lambda\lVert W\rVert_F^2$ to the loss, we remove models that use different transition rules at different times. The model is biased toward one time-homogeneous rule that can be reused on sequences of unseen lengths.
 
-CNN weight sharing has the same interpretation across spatial locations: one convolutional kernel is reused wherever a pattern appears. RNNs share across time; CNNs share across space. In both cases, parameter tying reduces degrees of freedom and encodes a useful prior directly into the architecture.
+CNN weight sharing has the same interpretation across spatial locations: one convolutional kernel is reused across the spatial resolution of input image. RNNs share across time; CNNs share across space. In both cases, parameter tying reduces degrees of freedom and encodes a useful prior directly into the architecture.
 
 *This architectural-regularization viewpoint was explained by [Prof. Prathosh A. P.](https://prathosh.in) in the PRNN course taught at IISc.*
 
