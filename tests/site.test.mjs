@@ -120,7 +120,9 @@ test("RNN draft renders matrix derivations and attributed figures", async () => 
   assert.doesNotMatch(source, /\\right\|_/);
   assert.doesNotMatch(html, /,ldots/);
   assert.match(html, /aria-label="Article contents"/);
-  assert.match(html, /rnn-architecture-analytics-vidhya\.webp/);
+  assert.match(html, /rnn-unrolled-goodnotes\.png/);
+  assert.match(html, /Author’s handwritten notes/);
+  assert.doesNotMatch(html, /rnn-architecture-analytics-vidhya/);
   assert.match(html, /gru-cell-d2l\.svg/);
   assert.match(html, /cs231n\.github\.io\/rnn/);
   assert.match(html, /chapter_recurrent-neural-networks/);

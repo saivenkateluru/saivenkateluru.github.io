@@ -85,8 +85,8 @@ $$
 Recursively, $h_t$ is a learned summary of the prefix $x_{1:t}$. The recurrence is usually drawn as a loop, but unrolling it reveals a depth-$T$ computation graph whose copies share parameters.
 
 <figure className="source-figure">
-  <img src="/blog/rnns/rnn-architecture-analytics-vidhya.webp" alt="A recurrent neural network shown as one recurrent cell and as the same cell unrolled through three time steps" loading="lazy" />
-  <figcaption><strong>Figure 1.</strong> A recurrent cell and its time-unrolled computation graph. Every blue cell uses the same parameters. Source: <a href="https://cdn.analyticsvidhya.com/wp-content/uploads/2024/09/image-80.webp">Analytics Vidhya</a>.</figcaption>
+  <img src="/blog/rnns/rnn-unrolled-goodnotes.png" alt="Handwritten diagram showing a recurrent neural network as one recurrent cell and as the same cell unrolled across time with shared input, recurrent, and output weights" loading="lazy" />
+  <figcaption><strong>Figure 1.</strong> A recurrent cell and its time-unrolled computation graph. The matrices $W_{xh}$, $W_{hh}$, and $W_{hy}$ are shared at every time step. Author's handwritten notes.</figcaption>
 </figure>
 
 For token-level supervision, let
