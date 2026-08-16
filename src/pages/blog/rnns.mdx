@@ -182,7 +182,10 @@ J_t
 }
 $$
 
-The Jacobian $J_t$ is the local linear map that transports a perturbation in $h_{t-1}$ to a perturbation in $h_t$.
+<figure className="source-figure">
+  <img src="/blog/rnns/rnn-hidden-jacobian-goodnotes.png" alt="Handwritten differential derivation showing that varying the previous hidden state gives dh_t equal to D_t W_hh dh_{t-1}" loading="lazy" />
+  <figcaption><strong>Figure 2.</strong> Differential derivation of $dh_t=D_tW_{hh}dh_{t-1}$, where $D_t=\operatorname{Diag}(\phi'(a_t))$.</figcaption>
+</figure>
 
 Repeated application of the chain rule gives
 
@@ -400,7 +403,7 @@ $$
 
 <figure className="source-figure">
   <img src="/blog/rnns/gru-cell-d2l.svg" alt="GRU computation graph showing the reset gate, update gate, candidate state, and additive carry path" loading="lazy" />
-  <figcaption><strong>Figure 2.</strong> A GRU uses a reset gate when constructing the candidate and an update gate when mixing the candidate with the previous state. Source: <a href="https://d2l.ai/chapter_recurrent-modern/gru.html">Dive into Deep Learning</a>.</figcaption>
+  <figcaption><strong>Figure 3.</strong> A GRU uses a reset gate when constructing the candidate and an update gate when mixing the candidate with the previous state. Source: <a href="https://d2l.ai/chapter_recurrent-modern/gru.html">Dive into Deep Learning</a>.</figcaption>
 </figure>
 
 Holding the update gate and candidate fixed along the direct carry edge,
