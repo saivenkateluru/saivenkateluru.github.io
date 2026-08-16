@@ -82,7 +82,7 @@ W_{hh}\in\mathbb{R}^{d_h\times d_h},
 W_{xh}\in\mathbb{R}^{d_h\times d_x}.
 $$
 
-Recursively, $h_t$ is a learned summary of the prefix $x_{1:t}$. The recurrence is usually drawn as a loop, but unrolling it reveals a depth-$T$ computation graph whose copies share parameters.
+Recursively, $h_t$ is a learned summary of the prefix $x_{1:t}$. The recurrence is usually drawn as a loop, but unrolling it reveals a depth-$T$ computation graph.
 
 <figure className="source-figure">
   <img src="/blog/rnns/rnn-unrolled-goodnotes.png" alt="Handwritten diagram showing a recurrent neural network as one recurrent cell and as the same cell unrolled across time with shared input, recurrent, and output weights" loading="lazy" />
@@ -127,12 +127,12 @@ $$
 L=\ell(h_T).
 $$
 
-Every earlier hidden state can affect $L$ only through the recurrent chain leading to $h_T$. This makes the effect of temporal distance on learning explicit.
+Every earlier hidden state can affect $L$ only through the recurrent chain leading to $h_T$. This makes explicit how temporal distance affects parameter learning.
 
 Two limitations are already visible:
 
 1. **Sequential computation:** $h_t$ cannot be computed before $h_{t-1}$.
-2. **Repeated transport:** information from time $t-k$ must cross $k$ recurrent transitions to affect time $t$.
+2. **Temporal distance:** information and learning signals between distant time steps must traverse every intermediate recurrent transition.
 
 The second limitation becomes precise when we differentiate the unrolled graph.
 
@@ -140,24 +140,18 @@ The second limitation becomes precise when we differentiate the unrolled graph.
 
 ### The hidden-state Jacobian
 
-For fixed parameters and input,
-
-$$
-da_t=W_{hh}\,dh_{t-1}.
-$$
-
-Because $\phi$ is applied elementwise,
-
-$$
-dh_t=D_t\,da_t,
-\qquad
-D_t=\operatorname{Diag}\!\left(\phi'(a_t)\right).
-$$
+Figure 2 differentiates one recurrent step with respect to $h_{t-1}$ while holding $x_t$ and the parameters fixed.
 
 <figure className="source-figure">
   <img src="/blog/rnns/rnn-hidden-jacobian-goodnotes.png" alt="Handwritten differential derivation showing that varying the previous hidden state gives dh_t equal to D_t W_hh dh_{t-1}" loading="lazy" />
-  <figcaption><strong>Figure 2.</strong> Differential derivation of $dh_t=D_tW_{hh}dh_{t-1}$, where $D_t=\operatorname{Diag}(\phi'(a_t))$.</figcaption>
+  <figcaption><strong>Figure 2.</strong> Differential derivation for one recurrent transition.</figcaption>
 </figure>
+
+Writing $D_t:=\operatorname{Diag}(\phi'(a_t))$, Figure 2 gives
+
+$$
+dh_t=D_tW_{hh}\,dh_{t-1}.
+$$
 
 Repeated application of the chain rule gives
 
