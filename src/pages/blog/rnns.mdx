@@ -186,13 +186,11 @@ $$
 The backward pass starts at the final loss and follows the recurrent chain:
 
 $$
-\boxed{
 g_T=\nabla_{h_T}L,
 \qquad
 g_t=W_{hh}^\top\delta_{t+1}\ \text{for }t<T,
 \qquad
 \delta_t=D_tg_t.
-}
 $$
 
 This is ordinary reverse-mode differentiation on the unrolled graph.
@@ -245,10 +243,8 @@ $$
 Comparing this with $dL=\operatorname{tr}((\nabla_{W_{hh}}L)^\top dW_{hh})$ gives
 
 $$
-\boxed{
 \nabla_{W_{hh}}L
 =\sum_{t=1}^{T}\delta_th_{t-1}^\top.
-}
 $$
 
 Each term is an outer product:
@@ -270,10 +266,8 @@ This entire procedure—unroll the shared recurrence and apply reverse-mode diff
 For an earlier time $s<T$, the hidden-state gradient derived above matters because the use of $W_{hh}$ at time $s$ contributes
 
 $$
-\boxed{
 G_s:=\delta_sh_{s-1}^\top
 =D_s\nabla_{h_s}L\,h_{s-1}^\top
-}
 $$
 
 to the parameter gradient. The shared matrix receives the sum of these contributions:
@@ -298,13 +292,11 @@ $$
 This is the direct connection to the weight update. If $\|D_jW_{hh}\|_2\le\gamma<1$, then
 
 $$
-\boxed{
 \|G_s\|_F
 \le
 \|h_{s-1}\|_2\|D_s\|_2
 \gamma^{T-s}
 \|\nabla_{h_T}L\|_2.
-}
 $$
 
 The contribution from an early use of $W_{hh}$ therefore decays exponentially with its distance from the final loss. The optimizer receives almost no signal about how that early transition should change to reduce the final error. This loss of long-range credit—not merely a small derivative with respect to an intermediate hidden state—is why vanishing gradients obstruct learning. For $\phi=\tanh$, saturation makes entries of $D_j$ approach zero and strengthens the contraction.
@@ -359,10 +351,8 @@ $$
 The direct cell-state path across $k$ steps is therefore
 
 $$
-\boxed{
 J^{\mathrm{cell}}_{c_t\leftarrow c_{t-k}}
 =F_tF_{t-1}\cdots F_{t-k+1}.
-}
 $$
 
 If the model learns $f_j\approx\mathbf{1}$ over an interval, then $F_j\approx I$ and this product remains close to identity. The model has learned to copy its memory rather than repeatedly rewrite it.
@@ -390,12 +380,10 @@ $$
 This particular contribution to the hidden-state Jacobian is
 
 $$
-\boxed{
 J^{\mathrm{cell}}_{h_t\leftarrow h_{t-k}}
 =D_t^{\mathrm{out}}
 \left(F_tF_{t-1}\cdots F_{t-k+2}\right)
 G_{t-k+1}.
-}
 $$
 
 The important difference is that the long middle product can be close to identity. The endpoint factors may still attenuate the gradient, but they occur once rather than once per time step.
@@ -428,10 +416,8 @@ $$
 Across several carry edges,
 
 $$
-\boxed{
 J^{\mathrm{carry}}_{h_t\leftarrow h_{t-k}}
 =\prod_{j=t-k+1}^{t}\operatorname{Diag}(z_j).
-}
 $$
 
 When $z_j\approx1$, the GRU copies the old state and the direct derivative remains near identity. The reset gate $r_t$ separately controls how much of the previous state is used to construct the candidate $\widetilde h_t$.
