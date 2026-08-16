@@ -254,22 +254,29 @@ Each term is an outer product:
 
 BPTT sums these local contributions because one shared matrix appears in every unrolled copy.
 
-<details className="doubt">
-  <summary>We know $h_t$, so why not update $W_{hh}$ using $h_t$ itself?</summary>
-  <p>$h_t$ is a state, not a loss derivative. An update needs both the incoming activation $h_{t-1}$ and the loss sensitivity $\delta_t$. Their outer product has the same shape as $W_{hh}$ and identifies which matrix entries should change. The value $h_t$ alone contains neither this credit-assignment information nor the required matrix structure.</p>
-</details>
-
 This entire procedure—unroll the shared recurrence and apply reverse-mode differentiation—is **backpropagation through time (BPTT)**.
 
 ## 4. Why gradients vanish or explode
 
-To see why the recurrent derivative product matters for learning, focus on the final loss's contribution through the earliest use of $W_{hh}$:
+To see why the recurrent derivative product matters for learning, focus on the final loss's contribution through the earliest use of $W_{hh}$. Recall that $\delta_t:=\nabla_{a_t}L$. Expanding the backward recursion gives
+
+$$
+\begin{aligned}
+\delta_1
+&=D_1g_1\\
+&=D_1W_{hh}^\top\delta_2\\
+&=D_1W_{hh}^\top D_2W_{hh}^\top\cdots
+D_T\nabla_{h_T}L\\
+&=D_1\left[(D_TW_{hh})\cdots(D_2W_{hh})\right]^\top
+\nabla_{h_T}L.
+\end{aligned}
+$$
+
+The time-$1$ use of $W_{hh}$ therefore contributes
 
 $$
 G_1
 :=\delta_1h_0^\top
-=D_1\left[(D_TW_{hh})(D_{T-1}W_{hh})\cdots(D_2W_{hh})\right]^\top
-\nabla_{h_T}L\,h_0^\top.
 $$
 
 Because $W_{hh}$ is shared, the full gradient sums $G_s:=\delta_sh_{s-1}^\top$ over all its uses: $\nabla_{W_{hh}}L=\sum_{s=1}^{T}G_s$. We isolate $G_1$ because it contains the longest temporal path.
@@ -302,8 +309,6 @@ $$
 an enormous gradient can produce an unstable update or numerical overflow. Expansion is not guaranteed merely because individual spectral norms exceed one; the gradient must repeatedly align with expanding directions.
 
 For scale, $0.9^{50}\approx0.0052$, whereas $1.1^{50}\approx117$. Gradient clipping can limit an exploding update, but it cannot recover a long-range learning signal after it has vanished. LSTMs and GRUs instead provide paths whose repeated derivatives can remain closer to identity.
-
-<div className="takeaway">The difficulty is not recurrence alone. It is forcing long-range credit through a long product of dense, nonlinear transition Jacobians.</div>
 
 ## 5. LSTM: an additive memory path
 
