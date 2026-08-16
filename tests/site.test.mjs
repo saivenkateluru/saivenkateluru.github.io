@@ -123,13 +123,15 @@ test("RNN draft renders matrix derivations and attributed figures", async () => 
   assert.match(html, /rnn-unrolled-goodnotes\.png/);
   assert.match(html, /Author’s handwritten notes/);
   assert.doesNotMatch(html, /rnn-architecture-analytics-vidhya/);
+  assert.match(html, /Weight sharing as architectural regularization/);
+  assert.match(html, /PRNN course taught at IISc/);
+  assert.match(html, /href="https:\/\/prathosh\.in"/);
   assert.match(html, /gru-cell-d2l\.svg/);
   assert.match(html, /cs231n\.github\.io\/rnn/);
   assert.match(html, /chapter_recurrent-neural-networks/);
   assert.match(html, /Understanding-LSTMs/);
   assert.doesNotMatch(html, /Bahdanau|Vaswani|Attention Is All You Need/);
   assert.doesNotMatch(html, /encoder-decoder-attention-lecture/);
-  assert.doesNotMatch(html, /Prathosh/);
   assert.doesNotMatch(html, /MultiHeadAttention|Transformer encoder|query-key-value/i);
 });
 
