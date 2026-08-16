@@ -89,7 +89,8 @@ Recursively, $h_t$ is a learned summary of the prefix $x_{1:t}$. The recurrence 
   <figcaption><strong>Figure 1.</strong> A recurrent cell and its time-unrolled computation graph. The matrices $W_{xh}$, $W_{hh}$, and $W_{hy}$ are shared at every time step.</figcaption>
 </figure>
 
-### Weight sharing as architectural regularization
+<details className="doubt">
+  <summary>Weight sharing as architectural regularization</summary>
 
 There is another useful way to understand the shared arrows in Figure 1. Suppose an untied sequence model used a different recurrent matrix at every time step:
 
@@ -117,6 +118,8 @@ is a restricted subset of the untied class. This is **architectural regularizati
 CNN weight sharing has the same interpretation across spatial locations: one convolutional kernel is reused across the spatial resolution of input image. RNNs share across time; CNNs share across space. In both cases, parameter tying reduces degrees of freedom and encodes a useful prior directly into the architecture.
 
 *This architectural-regularization viewpoint was explained by [Prof. Prathosh A. P.](https://prathosh.in) in the PRNN course taught at IISc.*
+
+</details>
 
 For token-level supervision, let
 
