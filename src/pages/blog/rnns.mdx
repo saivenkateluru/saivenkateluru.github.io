@@ -299,7 +299,79 @@ $$
 
 so the signal decays exponentially with the temporal distance $k$. For $\phi=\tanh$, saturation makes entries of $D_j$ approach zero, which strengthens this contraction.
 
-If the Jacobian product repeatedly expands the transported vector instead, its norm can grow exponentially. The resulting parameter gradients become unstable, and a single optimizer step may move the parameters far outside a useful region.
+### From hidden-state gradients to parameter updates
+
+The optimizer does not update hidden states; it updates parameters. We therefore need one more step connecting the transported gradient above to $\nabla_{W_{hh}}L$.
+
+Consider the contribution of a loss $\ell_t$ to an earlier use of $W_{hh}$ at time $s\le t$. Define
+
+$$
+\delta_s^{(t)}:=\nabla_{a_s}\ell_t.
+$$
+
+Since the error must travel from $h_t$ back to $h_s$ and then through $h_s=\phi(a_s)$,
+
+$$
+\delta_s^{(t)}
+=D_s
+\left[(D_tW_{hh})(D_{t-1}W_{hh})\cdots(D_{s+1}W_{hh})\right]^\top
+\nabla_{h_t}\ell_t,
+$$
+
+where the product is the identity when $s=t$. Because $a_s=W_{hh}h_{s-1}+\cdots$, the time-$s$ use of the shared matrix contributes the following pathwise term—not the full derivative by itself:
+
+$$
+\boxed{
+G_s^{(t)}
+:=\nabla_{W_{hh}}^{(s)}\ell_t
+=\delta_s^{(t)}h_{s-1}^\top.
+}
+$$
+
+The total preactivation gradient at time $s$ is
+
+$$
+\delta_s=\nabla_{a_s}L=\sum_{t=s}^{T}\delta_s^{(t)}.
+$$
+
+Summing over every source loss and every earlier use of the shared matrix therefore recovers the full parameter gradient:
+
+$$
+\nabla_{W_{hh}}L
+=\sum_{t=1}^{T}\sum_{s=1}^{t}G_s^{(t)}
+=\sum_{s=1}^{T}\left(\sum_{t=s}^{T}\delta_s^{(t)}\right)h_{s-1}^\top.
+$$
+
+For each rank-one contribution,
+
+$$
+\boxed{
+\left\|G_s^{(t)}\right\|_F
+=\left\|\delta_s^{(t)}\right\|_2
+\left\|h_{s-1}\right\|_2.
+}
+$$
+
+The transported error also obeys
+
+$$
+\left\|\delta_s^{(t)}\right\|_2
+\le
+\|D_s\|_2
+\left\|(D_tW_{hh})\cdots(D_{s+1}W_{hh})\right\|_2
+\left\|\nabla_{h_t}\ell_t\right\|_2.
+$$
+
+This is the direct connection to learning. If the recurrent Jacobian product contracts with the gap $t-s$ while the endpoint factors $\|D_s\|_2$ and $\|\nabla_{h_t}\ell_t\|_2$ remain bounded, then $\delta_s^{(t)}$ becomes tiny. The late loss consequently produces almost no update to $W_{hh}$ through its use at the early time $s$. The model may still receive healthy gradients from nearby losses; what disappears is the **long-range credit signal** telling it how an early transition affected a much later error.
+
+If the product repeatedly expands the transported error instead, some $G_s^{(t)}$ terms can become enormous and may dominate the sum. Pathwise terms can cancel, so one enormous term does not guarantee that the final summed gradient is enormous; nevertheless, learning becomes highly sensitive to such unstable cancellation. Under gradient descent,
+
+$$
+W_{hh}^{\text{new}}
+=W_{hh}-\eta\nabla_{W_{hh}}L,
+$$
+
+so an exploding parameter gradient produces an excessively large update, causing oscillation, overflow, or departure from a useful region of parameter space.
 
 For scale, $0.9^{50}\approx0.0052$, whereas $1.1^{50}\approx117$. Repeated mild contraction or expansion can therefore become severe over a long sequence. The contraction bound above gives a sufficient condition for vanishing. Large individual spectral norms do **not** similarly prove explosion: the transported gradient must also align with expanding singular directions across the changing Jacobians.
 
