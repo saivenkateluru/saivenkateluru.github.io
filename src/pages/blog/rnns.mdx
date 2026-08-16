@@ -140,22 +140,6 @@ The second limitation becomes precise when we differentiate the unrolled graph.
 
 ## 3. Backpropagation through time
 
-We use column-vector gradients. The Frobenius inner product between equal-shaped matrices is
-
-$$
-\langle A,B\rangle_F:=\operatorname{tr}(A^\top B).
-$$
-
-For a scalar loss $L$ and a matrix parameter $W$, define the matrix gradient through
-
-$$
-dL
-=\left\langle \nabla_WL,dW\right\rangle_F
-=\operatorname{tr}\!\left((\nabla_WL)^\top dW\right).
-$$
-
-This identity lets us read a matrix gradient directly from the differential of the loss.
-
 ### The hidden-state Jacobian
 
 For fixed parameters and input,
@@ -172,16 +156,6 @@ dh_t=D_t\,da_t,
 D_t=\operatorname{Diag}\!\left(\phi'(a_t)\right).
 $$
 
-Therefore
-
-$$
-\boxed{
-J_t
-:=\frac{\partial h_t}{\partial h_{t-1}}
-=D_tW_{hh}.
-}
-$$
-
 <figure className="source-figure">
   <img src="/blog/rnns/rnn-hidden-jacobian-goodnotes.png" alt="Handwritten differential derivation showing that varying the previous hidden state gives dh_t equal to D_t W_hh dh_{t-1}" loading="lazy" />
   <figcaption><strong>Figure 2.</strong> Differential derivation of $dh_t=D_tW_{hh}dh_{t-1}$, where $D_t=\operatorname{Diag}(\phi'(a_t))$.</figcaption>
@@ -192,7 +166,7 @@ Repeated application of the chain rule gives
 $$
 \boxed{
 \frac{\partial h_t}{\partial h_{t-k}}
-=J_tJ_{t-1}\cdots J_{t-k+1}.
+=(D_tW_{hh})(D_{t-1}W_{hh})\cdots(D_{t-k+1}W_{hh}).
 }
 $$
 
@@ -200,13 +174,13 @@ Consequently, a loss at time $t$ sends a column gradient backward as
 
 $$
 \nabla_{h_{t-k}}\ell_t
-=\left(J_tJ_{t-1}\cdots J_{t-k+1}\right)^\top
+=\left[(D_tW_{hh})(D_{t-1}W_{hh})\cdots(D_{t-k+1}W_{hh})\right]^\top
 \nabla_{h_t}\ell_t.
 $$
 
 <details className="doubt">
   <summary>Why does the transpose appear during backpropagation?</summary>
-  <p>The forward differential is $dh_t=J_tdh_{t-1}$. Substituting this into $d\ell=(\nabla_{h_t}\ell)^\top dh_t$ and matching the coefficient of $dh_{t-1}$ gives $\nabla_{h_{t-1}}\ell=J_t^\top\nabla_{h_t}\ell$.</p>
+  <p>The forward differential is $dh_t=(D_tW_{hh})dh_{t-1}$. Substituting this into $d\ell=(\nabla_{h_t}\ell)^\top dh_t$ and matching the coefficient of $dh_{t-1}$ gives $\nabla_{h_{t-1}}\ell=(D_tW_{hh})^\top\nabla_{h_t}\ell$.</p>
 </details>
 
 ### The backward recursion
@@ -240,6 +214,27 @@ The recurrent matrix is shared, so the same perturbation $dW_{hh}$ appears at ev
 $$
 d_{W_{hh}}a_t=(dW_{hh})h_{t-1}.
 $$
+
+<details className="doubt">
+  <summary>Matrix-gradient convention: Frobenius inner product</summary>
+
+We use column-vector gradients. For equal-shaped matrices, define
+
+$$
+\langle A,B\rangle_F:=\operatorname{tr}(A^\top B).
+$$
+
+For a scalar loss $L$ and a matrix parameter $W$, define the matrix gradient through
+
+$$
+dL
+=\left\langle \nabla_WL,dW\right\rangle_F
+=\operatorname{tr}\!\left((\nabla_WL)^\top dW\right).
+$$
+
+This identity lets us read a matrix gradient directly from the differential of the loss.
+
+</details>
 
 Using $\delta_t=\nabla_{a_t}L$, the corresponding loss differential is
 
@@ -286,7 +281,7 @@ $$
 \begin{aligned}
 \left\|\nabla_{h_{t-k}}\ell_t\right\|_2
 &\le
-\left(\prod_{j=t-k+1}^{t}\|J_j\|_2\right)
+\left(\prod_{j=t-k+1}^{t}\|D_jW_{hh}\|_2\right)
 \left\|\nabla_{h_t}\ell_t\right\|_2\\
 &\le
 \left(\prod_{j=t-k+1}^{t}\|D_j\|_2\|W_{hh}\|_2\right)
@@ -294,7 +289,7 @@ $$
 \end{aligned}
 $$
 
-If $\|J_j\|_2\le\gamma<1$ throughout the interval, then
+If $\|D_jW_{hh}\|_2\le\gamma<1$ throughout the interval, then
 
 $$
 \left\|\nabla_{h_{t-k}}\ell_t\right\|_2
@@ -309,7 +304,7 @@ If the Jacobian product repeatedly expands the transported vector instead, its n
 For scale, $0.9^{50}\approx0.0052$, whereas $1.1^{50}\approx117$. Repeated mild contraction or expansion can therefore become severe over a long sequence. The contraction bound above gives a sufficient condition for vanishing. Large individual spectral norms do **not** similarly prove explosion: the transported gradient must also align with expanding singular directions across the changing Jacobians.
 
 <details className="doubt">
-  <summary>Does $\|J_j\|_2\gt1$ at every step guarantee an exploding gradient?</summary>
+  <summary>Does $\|D_jW_{hh}\|_2\gt1$ at every step guarantee an exploding gradient?</summary>
   <p>No. The spectral norm is the largest possible one-step expansion. The actual gradient must also remain aligned with expanding singular directions across many changing Jacobians. The norm product is a useful bound, not an exact prediction.</p>
 </details>
 

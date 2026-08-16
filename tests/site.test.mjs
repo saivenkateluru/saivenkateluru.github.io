@@ -113,6 +113,7 @@ test("RNN draft renders matrix derivations and attributed figures", async () => 
   assert.match(html, /Recurrent Neural Networks/);
   assert.match(html, /Backpropagation through time/);
   assert.match(html, /Frobenius inner product/);
+  assert.match(html, /<summary>Matrix-gradient convention: Frobenius inner product<\/summary>/);
   assert.match(html, /Deriving/);
   assert.match(html, /path notation/);
   assert.match(html, /do not mathematically guarantee/);
@@ -122,6 +123,7 @@ test("RNN draft renders matrix derivations and attributed figures", async () => 
   assert.match(html, /aria-label="Article contents"/);
   assert.match(html, /rnn-unrolled-goodnotes\.png/);
   assert.match(html, /rnn-hidden-jacobian-goodnotes\.png/);
+  assert.doesNotMatch(source, /J_t/);
   assert.doesNotMatch(html, /local linear map that transports a perturbation/);
   assert.doesNotMatch(html, /rnn-architecture-analytics-vidhya/);
   assert.match(html, /Weight sharing as architectural regularization/);
